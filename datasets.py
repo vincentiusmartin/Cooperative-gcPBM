@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 import torch
 from torch.nn import functional
@@ -12,15 +13,9 @@ os.chdir("/Users/kylepinheiro/research_code")
 
 
 class SequenceDataset(Dataset):
-    def __init__(self, seqs, deltas, train=False):
-        split = 4 * len(seqs) // 5
-        if train:
-            indices = slice(0, split)
-        else:
-            indices = slice(split, -1)
-
-        self.sequences = seqs[indices]
-        self.deltas = deltas[indices]
+    def __init__(self, seqs, deltas, ids):
+        self.sequences = seqs[ids]
+        self.deltas = deltas[ids]
 
     def __len__(self):
         return len(self.sequences)
@@ -32,17 +27,17 @@ class SequenceDataset(Dataset):
         return sequence, self.deltas[idx].float()
 
 
-def get_train_and_validate_datasets(experiment_name, mers=1):
+def get_cross_validate_datasets(experiment_name, data_path, random_state, mers=1):
     experiment_dict = {
         "ets1_ets1":
             {
-                "labeled_data_path": "./data/lbled_o1_selected.csv",
-                "training_data_path": "./data/train_ets1_ets1.tsv",
+                "labeled_data_path": os.path.join(data_path, "lbled_o1_selected.csv"),
+                "training_data_path": os.path.join(data_path, "data/train_ets1_ets1.tsv"),
             },
         "ets1_runx1":
             {
-                "labeled_data_path": "./data/both_ori_plt_ets1_runx1.csv",
-                "training_data_path": "./data/train_ets1_runx1.tsv",
+                "labeled_data_path": os.path.join(data_path, "both_ori_plt_ets1_runx1.csv"),
+                "training_data_path": os.path.join(data_path, "train_ets1_runx1.tsv"),
             },
     }
 
@@ -51,15 +46,14 @@ def get_train_and_validate_datasets(experiment_name, mers=1):
     df_delta = pd.read_csv(experiment["labeled_data_path"])
     dft = pd.read_csv(experiment["training_data_path"], sep="\t")
 
-    df_delta["delta"] = df_delta["indiv_median"]  # df_delta["two_median"] - df_delta["indiv_median"]
+    df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
 
     dft = dft.merge(df_delta, on="Name")
 
-    dft = dft.sample(frac=1).reset_index(drop=True)
-
-    # this line and the next enable/disable filtering on "cooperative" classification
-    dft = dft[dft["label_x"] == "cooperative"]
-    dft = dft.reset_index()
+    # for ets1_ets1 experiments, only use data that was classified as cooperative
+    if experiment_name == "ets1_ets1":
+        dft = dft[dft["label_x"] == "cooperative"]
+        dft = dft.reset_index()
 
     # Generate input sequence data depending on k-mer length
     if mers == 1:
@@ -91,10 +85,18 @@ def get_train_and_validate_datasets(experiment_name, mers=1):
     # Obtain target vector
     deltas = dft["delta"]
     deltas = np.expand_dims(deltas, axis=1)
+
+    # scaling needs to be moved to where it can be done on trained data
     scaler = StandardScaler().fit(deltas)  # need to only apply this to the input
     deltas = scaler.transform(deltas)
     deltas = np.squeeze(deltas, axis=1)
     deltas = torch.from_numpy(deltas)
 
-    return (SequenceDataset(sequences, deltas, train=True),
-            SequenceDataset(sequences, deltas, train=False))
+    # https://github.com/christianversloot/machine-learning-articles/blob/main/how-to-use-k-fold-cross-validation-with-pytorch.md
+    k_fold = KFold(n_splits=5, shuffle=True, random_state=random_state)
+    cross_validation_split_ids = k_fold.split(sequences)
+
+    return [
+        (SequenceDataset(sequences, deltas, train_ids),
+         SequenceDataset(sequences, deltas, validate_ids))
+        for train_ids, validate_ids in cross_validation_split_ids]

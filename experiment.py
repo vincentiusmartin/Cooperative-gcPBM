@@ -1,46 +1,36 @@
-# import json
+import itertools
+import json
+import os
+import statistics
+import sys
+
 import matplotlib.pyplot as plt
 from sklearn import metrics
-import statistics
 import torch
-import torch.nn as nn
+from torch.nn import MSELoss
 from torch.utils.data import DataLoader
 
-from datasets import get_train_and_validate_datasets
+from datasets import get_cross_validate_datasets
+from networks import CNN, TwoLayerCNN
 
-
-class NeuralNetwork(nn.Module):
-    def __init__(self, conv_filters, kernel_size, fc_node_count):
-        super(NeuralNetwork, self).__init__()
-        padded_length = 35  # 36  # 38
-        in_channels = 64  # 16  # 4
-        conv_filters = conv_filters
-        kernel_size = kernel_size
-        self.conv_layer = nn.Sequential(
-            nn.ConstantPad1d(1, .25),
-            nn.Conv1d(in_channels, conv_filters, kernel_size),
-            nn.ReLU(),
-            # nn.MaxPool1d(4, 4)
-        )
-
-        self.flatten = nn.Flatten()
-
-        fc_node_count = fc_node_count
-        self.dense_layer = nn.Sequential(
-            nn.Linear((padded_length - kernel_size + 1)*conv_filters, fc_node_count),
-            nn.ReLU(),
-            nn.Dropout(.5),
-            nn.Linear(fc_node_count, 128),
-            nn.ReLU(),
-            nn.Dropout(.5),
-            nn.Linear(128, 1),
-        )
-
-    def forward(self, X):
-        X = self.conv_layer(X)
-        X = self.flatten(X)
-        X = self.dense_layer(X)
-        return X
+architecture_maps = {
+    "one_layer_cnn": {
+        "model": CNN,
+        "params": ("fc_layer_nodes", "conv_filters"),
+        "grid": {
+            "conv_filters": [16, 32, 64, 128, 256],
+            "fc_layer_nodes": [64, 128, 256, 512],
+        },
+    },
+    "two_layer_cnn": {
+        "model": TwoLayerCNN,
+        "grid": {
+            "conv_filters": [16, 32, 64, 128, 256],
+            "conv2_filters": [16, 32, 64, 128, 256],
+            "fc_layer_nodes": [64, 128, 256, 512],
+        },
+    },
+}
 
 
 def train(optimizer, loss_fn, model, dataloader):
@@ -105,39 +95,50 @@ def plot_train_validate_accuracy(train_series, validate_series):
     plt.show()
 
 
-def main():
+def process_experiment_architecture_model(experiment_name, architecture_name, output_path,
+                                          data_path, *params):
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    architecture = architecture_maps[architecture_name]
 
-    # print(NeuralNetwork(128, 18, 256))
+    # validate the params and move to a dictionary or variables
+    if len(architecture["params"]) != len(params):
+        raise AttributeError(f"architecture: {architecture_name} requires "
+                             f"{len(architecture['params'])} parameters:"
+                             f"\n {architecture['params']}")
 
-    # grid = [(conv_filters, kernel_size, fc_node_count)
-    #         for conv_filters in [16, 32, 48, 64, 128, 256]
-    #         for kernel_size in [6, 8, 10, 12, 18, 24, 28, 32]
-    #         for fc_node_count in [128, 256]]
-    grid = [(128, 18, 256)]
+    params = dict(zip(architecture["params"], params))
+
+    NeuralNetwork = architecture["model"]
+    grid_ranges = architecture["grid"]
+
+    # give me all possible combinations of the grid ranges
+    grid = list(itertools.product(*grid_ranges.values()))
 
     batch_size = 128
     epochs = 50
-    experiment = "ets1_ets1"
 
     results = {}
 
-    for params in grid:
-        max_validate_acc = []
-        conv_filters, kernel_size, fc_node_count = params
-        print(f"conv_filters: {conv_filters}, kernel_size: {kernel_size},"
-              f" fc_node_count: {fc_node_count}")
+    random_state = 1239283591
+    cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
+                                                          random_state=random_state,
+                                                          mers=params["mers"])
 
-        for i in range(10):
-            net = NeuralNetwork(*params).to(device)
+    cv_means = []
+    for grid_params in grid:
+        # Maybe use skorch for some part of this?
 
-            train_data, validate_data = get_train_and_validate_datasets(experiment, mers=3)
+        cv_max_validate_acc = []
+        for j, (train_data, validate_data) in enumerate(cross_validation_splits):
+            torch.manual_seed(random_state)
+            print(f"cross-validation: {j+1}")
 
+            net = NeuralNetwork(*grid_params, **params).to(device)
             train_dataloader = DataLoader(train_data, batch_size=batch_size)
             validate_dataloader = DataLoader(validate_data, batch_size=batch_size)
 
             optimizer = torch.optim.Adam(net.parameters())
-            loss_fn = nn.MSELoss()
+            loss_fn = MSELoss()
 
             train_acc = []
             validate_acc = []
@@ -150,22 +151,82 @@ def main():
                 train_acc.append(get_r2(net, train_dataloader))
                 validate_acc.append(get_r2(net, validate_dataloader))
 
-            max_validate_acc.append(max(validate_acc))
+            cv_max_validate_acc.append(max(validate_acc))
+            # plot_train_validate_accuracy(train_acc, validate_acc)
+
+        cv_means.append((grid_params, statistics.mean(cv_max_validate_acc)))
+
+    best_grid_params = max(cv_means, key=lambda x: x[1])[0]
+
+    print(best_grid_params)
+
+    cv_means = []
+    for i, random_state in enumerate(
+            (3454832692, 3917820095, 851603617, 432544541, 4162995973)):
+        cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
+                                                              random_state=random_state,
+                                                              mers=params["mers"])
+        cv_max_validate_acc = []
+
+        for j, (train_data, validate_data) in enumerate(cross_validation_splits):
+            torch.manual_seed(random_state)
+            print(f"cross-validation: {j+1}")
+
+            net = NeuralNetwork(*best_grid_params, *params).to(device)
+            train_dataloader = DataLoader(train_data, batch_size=batch_size)
+            validate_dataloader = DataLoader(validate_data, batch_size=batch_size)
+
+            optimizer = torch.optim.Adam(net.parameters())
+            loss_fn = MSELoss()
+
+            train_acc = []
+            validate_acc = []
+
+            # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            # Training the model 1 time                           #
+            # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            for t in range(epochs):
+                train(optimizer, loss_fn, net, train_dataloader)
+                train_acc.append(get_r2(net, train_dataloader))
+                validate_acc.append(get_r2(net, validate_dataloader))
+
+            cv_max_validate_acc.append(max(validate_acc))
             plot_train_validate_accuracy(train_acc, validate_acc)
-            print(f"{i+1}", end=",")
-        print()
-        mean = statistics.mean(max_validate_acc)
-        std = statistics.stdev(max_validate_acc, mean)
-        print(f"mean validate R^2: {mean}")
-        print(f"std validate R^2: {std}")
-        results[f"{conv_filters},{kernel_size},{fc_node_count}"] = (mean, std)
+        print(f"{i+1}")
+        cv_means.append(statistics.mean(cv_max_validate_acc))
+
+    print()
+
+    mean = statistics.mean(cv_means)
+    std = statistics.stdev(cv_means, mean)
+    print(f"mean validate R^2: {mean}")
+    print(f"std validate R^2: {std}")
+    param_string = (",".join(list(*best_grid_params, **params)))
+
+    results[param_string] = (mean, std)
 
     best_params, (best_mean, best_std) = max(results.items(), key=lambda item: item[1][0])
     print(f"{best_params}: {best_mean}, {best_std}")
 
-    # with open("single_conv_2_fc_layers_3mers.json", "w") as f:
-    #     json.dump(results, f)
+    with open(os.path.join(output_path, f"{job_id}.json"), "w") as f:
+        json.dump(results, f)
 
 
 if __name__ == "__main__":
-    main()
+    # process_experiment_architecture_model(experiment, architecture, "/null")
+    # argument format:
+    # <job_id> <output_path> <data_path> <ets1_ets1|ets1_runx1> <architecture>
+    # <mers> <kernel_size> <num_conv_filters>
+    print(sys.argv)
+    job_id = sys.argv[1]
+    output_path = sys.argv[2]
+    data_path = sys.argv[3]  # "/Users/kylepinheiro/research_code"
+    experiment = sys.argv[4]  # "ets1_ets1"
+    architecture = sys.argv[5]  # "one_layer_cnn"
+    arch_params = sys.argv[6:]
+    # results will be placed in file with unique name by job id
+    output_path = os.path.join(output_path, f"task_{job_id}.json")
+
+    print(f"experiment: {experiment}, architecture: {architecture}, job_id:{job_id}")
+    process_experiment_architecture_model(job_id, experiment, architecture, output_path, data_path,
+                                          *arch_params)
