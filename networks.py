@@ -4,7 +4,7 @@ from torch import nn
 class CNN(nn.Module):
     def __init__(self, conv_filters, fc_node_count, kernel_size, mers=3):
         super(CNN, self).__init__()
-        padded_length = 36 - mers + 2  # + 2 for padding
+        padded_length = 36 - mers + 2 + 1  # + 2 for padding
         in_channels = 4 ** mers
         conv_filters = conv_filters
         kernel_size = kernel_size

@@ -13,10 +13,12 @@ from torch.utils.data import DataLoader
 from datasets import get_cross_validate_datasets
 from networks import CNN, TwoLayerCNN
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 architecture_maps = {
     "one_layer_cnn": {
         "model": CNN,
-        "params": ("fc_layer_nodes", "conv_filters"),
+        "params": ("kernel_size",),
         "grid": {
             "conv_filters": [16, 32, 64, 128, 256],
             "fc_layer_nodes": [64, 128, 256, 512],
@@ -24,6 +26,7 @@ architecture_maps = {
     },
     "two_layer_cnn": {
         "model": TwoLayerCNN,
+        "params": ("kernel_size", "kernel2_size"),
         "grid": {
             "conv_filters": [16, 32, 64, 128, 256],
             "conv2_filters": [16, 32, 64, 128, 256],
@@ -37,6 +40,8 @@ def train(optimizer, loss_fn, model, dataloader):
     model.train()
 
     for X, y_true in dataloader:
+        X.to(device)
+        y_true.to(device)
         y_hat = model(X)
         y_hat = y_hat.flatten()
         loss = loss_fn(y_hat, y_true)
@@ -71,6 +76,8 @@ def validate(model, dataloader):
 
     with torch.no_grad():
         for X, y in dataloader:
+            X.to(device)
+            y.to(device)
             y_hat = model(X)
             y_hat = y_hat.flatten()
             y_hat_arr += list(y_hat)
@@ -95,9 +102,8 @@ def plot_train_validate_accuracy(train_series, validate_series):
     plt.show()
 
 
-def process_experiment_architecture_model(experiment_name, architecture_name, output_path,
-                                          data_path, *params):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+def process_experiment_architecture_model(job_id, output_path, data_path, experiment_name,
+                                          architecture_name, mers, *params):
     architecture = architecture_maps[architecture_name]
 
     # validate the params and move to a dictionary or variables
@@ -122,7 +128,7 @@ def process_experiment_architecture_model(experiment_name, architecture_name, ou
     random_state = 1239283591
     cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
                                                           random_state=random_state,
-                                                          mers=params["mers"])
+                                                          mers=mers)
 
     cv_means = []
     for grid_params in grid:
@@ -133,7 +139,9 @@ def process_experiment_architecture_model(experiment_name, architecture_name, ou
             torch.manual_seed(random_state)
             print(f"cross-validation: {j+1}")
 
-            net = NeuralNetwork(*grid_params, **params).to(device)
+            print(grid_params)
+            print(params)
+            net = NeuralNetwork(*grid_params, mers=mers, **params).to(device)
             train_dataloader = DataLoader(train_data, batch_size=batch_size)
             validate_dataloader = DataLoader(validate_data, batch_size=batch_size)
 
@@ -165,7 +173,7 @@ def process_experiment_architecture_model(experiment_name, architecture_name, ou
             (3454832692, 3917820095, 851603617, 432544541, 4162995973)):
         cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
                                                               random_state=random_state,
-                                                              mers=params["mers"])
+                                                              mers=mers)
         cv_max_validate_acc = []
 
         for j, (train_data, validate_data) in enumerate(cross_validation_splits):

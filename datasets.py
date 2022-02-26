@@ -32,7 +32,7 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, mers=1
         "ets1_ets1":
             {
                 "labeled_data_path": os.path.join(data_path, "lbled_o1_selected.csv"),
-                "training_data_path": os.path.join(data_path, "data/train_ets1_ets1.tsv"),
+                "training_data_path": os.path.join(data_path, "train_ets1_ets1.tsv"),
             },
         "ets1_runx1":
             {

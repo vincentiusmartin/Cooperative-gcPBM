@@ -12,13 +12,11 @@ outdir="$HOME/$(date +"%Y_%m_%d_%I_%M_%p")" # specify path for data output (must
 
 data_path=""
 
-architectures=("1_conv_layer") # "1_conv_layer_max_pool" "2_conv_layer")
+architectures=("one_layer_cnn") # "1_conv_layer_max_pool" "2_conv_layer")
 
 experiments=("ets1_ets1" "ets1_runx1")  # 2
 
 kernel_sizes=(4 8 12 16 20 24 28)  # 7
-
-num_conv_filters=(32 64 128 256)  # 4
 
 mers=(1 2 3)  # 3
 
@@ -30,9 +28,7 @@ for experiment in "${experiments[@]}"; do
   for architecture in "${architectures[@]}"; do
     for mer in "${mers[@]}"; do
       for kernel_size in "${kernel_sizes[@]}"; do
-        for num_conv_filters in "${num_conv_filters[@]}"; do
-      args+=("${experiment} ${architecture} ${mer} ${kernel_size} ${num_conv_filters}")
-        done
+        args+=("${experiment} ${architecture} ${mer} ${kernel_size}")
       done
     done
   done
@@ -42,4 +38,4 @@ done
 
 # Use correct paths to appropriate python installation and python file
 srun python dl_cooperativity/experiment.py \
-"${SLURM_ARRAY_TASK_ID}" "${outdir}" "${data_path}" "${args[${SLURM_ARRAY_TASK_ID}]}"
+"${SLURM_ARRAY_TASK_ID}" "${outdir}" "${data_path}" ${args[${SLURM_ARRAY_TASK_ID}]}
