@@ -9,8 +9,6 @@ import torch
 from torch.nn import functional
 from torch.utils.data import Dataset
 
-os.chdir("/Users/kylepinheiro/research_code")
-
 
 class SequenceDataset(Dataset):
     def __init__(self, seqs, deltas, ids):

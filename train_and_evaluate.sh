@@ -4,13 +4,14 @@
 # TO RUN: sbatch -p compsci-gpu train_and_evaluate.sh
 
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=0-168%24
+#SBATCH --array=0-1%24
 #SBATCH --mail-type=END
-#ASDFSBATCH --mail-user=
+#SBATCH --output=dl.out
 
-outdir="$HOME/$(date +"%Y_%m_%d_%I_%M_%p")" # specify path for data output (must already exist)
+outdir="/home/users/kap52/${date +%m-%d-%Y-%H-%M}"
+mkdir -p $outdir
 
-data_path=""
+data_path="/usr/xtmp/kpinheiro/data"
 
 architectures=("one_layer_cnn") # "1_conv_layer_max_pool" "2_conv_layer")
 
@@ -37,5 +38,5 @@ done
 #echo ${#args[@]}
 
 # Use correct paths to appropriate python installation and python file
-srun python dl_cooperativity/experiment.py \
+srun /home/users/kap52/miniconda3/envs/dl_cooperativity/bin/python /home/users/kap52/dl_cooperativity/experiment.py \
 "${SLURM_ARRAY_TASK_ID}" "${outdir}" "${data_path}" ${args[${SLURM_ARRAY_TASK_ID}]}

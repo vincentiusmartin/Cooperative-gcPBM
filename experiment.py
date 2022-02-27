@@ -13,15 +13,16 @@ from torch.utils.data import DataLoader
 from datasets import get_cross_validate_datasets
 from networks import CNN, TwoLayerCNN
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+# device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cpu"
 
 architecture_maps = {
     "one_layer_cnn": {
         "model": CNN,
         "params": ("kernel_size",),
         "grid": {
-            "conv_filters": [16, 32, 64, 128, 256],
-            "fc_layer_nodes": [64, 128, 256, 512],
+            "conv_filters": [16],  #32, 64, 128, 256],
+            "fc_layer_nodes": [64], #128, 256, 512],
         },
     },
     "two_layer_cnn": {
@@ -40,8 +41,8 @@ def train(optimizer, loss_fn, model, dataloader):
     model.train()
 
     for X, y_true in dataloader:
-        X.to(device)
-        y_true.to(device)
+        X = X.to(device)
+        y_true = y_true.to(device)
         y_hat = model(X)
         y_hat = y_hat.flatten()
         loss = loss_fn(y_hat, y_true)
@@ -60,7 +61,9 @@ def get_r2(model, dataloader):
 
     with torch.no_grad():
         for X, y in dataloader:
-            y_hat = model(X)
+            X = X.to(device)
+            y = y.to(device)
+            y_hat = model(X).cpu()
             y_hat = y_hat.flatten()
             y_hat_arr += list(y_hat)
             y_true_arr += list(y)
@@ -83,7 +86,7 @@ def validate(model, dataloader):
             y_hat_arr += list(y_hat)
             y_true_arr += list(y)
 
-    return metrics.mean_squared_error(y_true_arr, y_hat_arr)
+    return metrics.mean_squared_error(y_true_arr.cpu(), y_hat_arr)
 
 
 def plot_train_validate_accuracy(train_series, validate_series):
@@ -112,7 +115,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
                              f"{len(architecture['params'])} parameters:"
                              f"\n {architecture['params']}")
 
-    params = dict(zip(architecture["params"], params))
+    params = dict(zip(architecture["params"], (int(param) for param in params)))
 
     NeuralNetwork = architecture["model"]
     grid_ranges = architecture["grid"]
@@ -180,7 +183,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
             torch.manual_seed(random_state)
             print(f"cross-validation: {j+1}")
 
-            net = NeuralNetwork(*best_grid_params, *params).to(device)
+            net = NeuralNetwork(*best_grid_params, mers=mers, **params).to(device)
             train_dataloader = DataLoader(train_data, batch_size=batch_size)
             validate_dataloader = DataLoader(validate_data, batch_size=batch_size)
 
@@ -199,7 +202,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
                 validate_acc.append(get_r2(net, validate_dataloader))
 
             cv_max_validate_acc.append(max(validate_acc))
-            plot_train_validate_accuracy(train_acc, validate_acc)
+            # plot_train_validate_accuracy(train_acc, validate_acc)
         print(f"{i+1}")
         cv_means.append(statistics.mean(cv_max_validate_acc))
 
@@ -209,7 +212,8 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
     std = statistics.stdev(cv_means, mean)
     print(f"mean validate R^2: {mean}")
     print(f"std validate R^2: {std}")
-    param_string = (",".join(list(*best_grid_params, **params)))
+    all_params = best_grid_params + tuple(params.values())
+    param_string = ",".join(str(param) for param in all_params)
 
     results[param_string] = (mean, std)
 
@@ -231,10 +235,9 @@ if __name__ == "__main__":
     data_path = sys.argv[3]  # "/Users/kylepinheiro/research_code"
     experiment = sys.argv[4]  # "ets1_ets1"
     architecture = sys.argv[5]  # "one_layer_cnn"
-    arch_params = sys.argv[6:]
-    # results will be placed in file with unique name by job id
-    output_path = os.path.join(output_path, f"task_{job_id}.json")
+    mers = int(sys.argv[6])
+    arch_params = sys.argv[7:]
 
     print(f"experiment: {experiment}, architecture: {architecture}, job_id:{job_id}")
-    process_experiment_architecture_model(job_id, experiment, architecture, output_path, data_path,
-                                          *arch_params)
+    process_experiment_architecture_model(job_id, output_path, data_path, experiment, architecture,
+                                          mers, *arch_params)
