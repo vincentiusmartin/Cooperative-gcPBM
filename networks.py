@@ -6,8 +6,6 @@ class CNN(nn.Module):
         super(CNN, self).__init__()
         padded_length = 36 - mers + 2 + 1  # + 2 for padding
         in_channels = 4 ** mers
-        conv_filters = conv_filters
-        kernel_size = kernel_size
         self.conv_layer = nn.Sequential(
             nn.ConstantPad1d(1, .25),
             nn.Conv1d(in_channels, conv_filters, kernel_size),
@@ -35,19 +33,17 @@ class CNN(nn.Module):
 
 
 class TwoLayerCNN(nn.Module):
-    def __init__(self, conv_filters, fc_node_count, kernel_size, conv2_filters, kernel2_size,
+    def __init__(self, conv_filters, conv2_filters, fc_node_count, kernel_size, kernel2_size,
                  mers=3):
         super(TwoLayerCNN, self).__init__()
-        padded_length = 36 - mers + 2  # + 2 for padding
+        padded_length = 36 - mers + 2 + 1  # + 2 for padding
         in_channels = 4 ** mers
-        conv_filters = conv_filters
-        kernel_size = kernel_size
         self.conv_layer = nn.Sequential(
             nn.ConstantPad1d(1, .25),
             nn.Conv1d(in_channels, conv_filters, kernel_size),
             nn.ReLU(),
         )
-        self.conv_layer2 = nn.Sequential(
+        self.conv2_layer = nn.Sequential(
             nn.Conv1d(conv_filters, conv2_filters, kernel2_size),
             nn.ReLU(),
         )

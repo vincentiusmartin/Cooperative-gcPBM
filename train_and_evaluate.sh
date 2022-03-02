@@ -1,27 +1,31 @@
 #!/bin/bash
 #
 #
-# TO RUN: sbatch -p compsci-gpu train_and_evaluate.sh
+# TO RUN: sbatch -p compsci-gpu -gres:1 train_and_evaluate.sh
 
+# (2 * 6 * 2) * (1 + 4) = 120
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=0-1%24
+#SBATCH --array=0-119%8
 #SBATCH --mail-type=END
 #SBATCH --output=dl.out
 
-outdir="/home/users/kap52/${date +%m-%d-%Y-%H-%M}"
-mkdir -p $outdir
+
+outdir="/home/users/kap52/id_${SLURM_ARRAY_JOB_ID}"
+mkdir -p "$outdir"
 
 data_path="/usr/xtmp/kpinheiro/data"
 
-architectures=("one_layer_cnn") # "1_conv_layer_max_pool" "2_conv_layer")
+architectures=("one_layer_cnn" "two_layer_cnn")  # 2
 
 experiments=("ets1_ets1" "ets1_runx1")  # 2
 
-kernel_sizes=(4 8 12 16 20 24 28)  # 7
+kernel_sizes=(4 8 12 16 20 24)  # 6
 
-mers=(1 2 3)  # 3
+kernel2_sizes=(4 8 12 16) # 4
 
-# 2 * 7 * 4 * 3 = 168
+mers=(2 3)  # 2
+
+# 2 * 2 * 7 * 2 = 55
 
 # for loop over models, feature sets, and models
 args=()
@@ -29,7 +33,14 @@ for experiment in "${experiments[@]}"; do
   for architecture in "${architectures[@]}"; do
     for mer in "${mers[@]}"; do
       for kernel_size in "${kernel_sizes[@]}"; do
+        if [ "${architecture}" = "two_layer_cnn" ]
+        then
+          for kernel2_size in "${kernel2_sizes[@]}"; do
+            args+=("${experiment} ${architecture} ${mer} ${kernel_size} ${kernel2_size}")
+          done
+        else
         args+=("${experiment} ${architecture} ${mer} ${kernel_size}")
+        fi
       done
     done
   done

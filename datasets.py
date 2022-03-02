@@ -60,8 +60,8 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, mers=1
     elif mers > 1:
         seqs = pd.DataFrame()
 
-        for i in range(1, 36-mers+1):
-            seqs[str(i)] = dft["Sequence"].str.slice(i, i+mers)
+        for i in range(1, 36-mers+2):
+            seqs[str(i)] = dft["Sequence"].str.slice(i-1, i+mers-1)
     else:
         raise ValueError("mers must be set to a positive integer")
 

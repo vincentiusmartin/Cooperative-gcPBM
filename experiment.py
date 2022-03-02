@@ -13,16 +13,15 @@ from torch.utils.data import DataLoader
 from datasets import get_cross_validate_datasets
 from networks import CNN, TwoLayerCNN
 
-# device = "cuda" if torch.cuda.is_available() else "cpu"
-device = "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 architecture_maps = {
     "one_layer_cnn": {
         "model": CNN,
         "params": ("kernel_size",),
         "grid": {
-            "conv_filters": [16],  #32, 64, 128, 256],
-            "fc_layer_nodes": [64], #128, 256, 512],
+            "conv_filters": [16, 32, 64, 128, 256],
+            "fc_layer_nodes": [128, 256, 512],
         },
     },
     "two_layer_cnn": {
@@ -31,7 +30,7 @@ architecture_maps = {
         "grid": {
             "conv_filters": [16, 32, 64, 128, 256],
             "conv2_filters": [16, 32, 64, 128, 256],
-            "fc_layer_nodes": [64, 128, 256, 512],
+            "fc_layer_nodes": [128, 256, 512],
         },
     },
 }
@@ -62,8 +61,8 @@ def get_r2(model, dataloader):
     with torch.no_grad():
         for X, y in dataloader:
             X = X.to(device)
-            y = y.to(device)
-            y_hat = model(X).cpu()
+            y = y.to("cpu")
+            y_hat = model(X).to("cpu")
             y_hat = y_hat.flatten()
             y_hat_arr += list(y_hat)
             y_true_arr += list(y)
@@ -79,14 +78,14 @@ def validate(model, dataloader):
 
     with torch.no_grad():
         for X, y in dataloader:
-            X.to(device)
-            y.to(device)
-            y_hat = model(X)
+            X = X.to(device)
+            y = y.to("cpu")
+            y_hat = model(X).to("cpu")
             y_hat = y_hat.flatten()
             y_hat_arr += list(y_hat)
             y_true_arr += list(y)
 
-    return metrics.mean_squared_error(y_true_arr.cpu(), y_hat_arr)
+    return metrics.mean_squared_error(y_true_arr, y_hat_arr)
 
 
 def plot_train_validate_accuracy(train_series, validate_series):
@@ -123,10 +122,8 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
     # give me all possible combinations of the grid ranges
     grid = list(itertools.product(*grid_ranges.values()))
 
-    batch_size = 128
-    epochs = 50
-
-    results = {}
+    batch_size = 64
+    epochs = 30
 
     random_state = 1239283591
     cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
@@ -171,14 +168,17 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
     print(best_grid_params)
 
-    cv_means = []
+    file_path = os.path.join(output_path, f"task_{job_id}.json")
+
     for i, random_state in enumerate(
             (3454832692, 3917820095, 851603617, 432544541, 4162995973)):
         cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
                                                               random_state=random_state,
                                                               mers=mers)
-        cv_max_validate_acc = []
+        with open(file_path, "w") as f:
+            f.write(json.dumps([]))
 
+        cv_max_validate_acc = []
         for j, (train_data, validate_data) in enumerate(cross_validation_splits):
             torch.manual_seed(random_state)
             print(f"cross-validation: {j+1}")
@@ -203,25 +203,31 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
             cv_max_validate_acc.append(max(validate_acc))
             # plot_train_validate_accuracy(train_acc, validate_acc)
-        print(f"{i+1}")
-        cv_means.append(statistics.mean(cv_max_validate_acc))
 
-    print()
+        mean = statistics.mean(cv_max_validate_acc)
+        new_result = {
+            "architecture": architecture_name,
+            "experiment": experiment_name,
+            "mers": mers,
+            "cross_validation_test_r2": cv_max_validate_acc,
+            "cv_test_r2_mean": mean,
+            "cv_test_r2_mean_std": statistics.stdev(cv_max_validate_acc, mean)
+        }
 
-    mean = statistics.mean(cv_means)
-    std = statistics.stdev(cv_means, mean)
-    print(f"mean validate R^2: {mean}")
-    print(f"std validate R^2: {std}")
-    all_params = best_grid_params + tuple(params.values())
-    param_string = ",".join(str(param) for param in all_params)
+        new_result.update(params)
 
-    results[param_string] = (mean, std)
+        new_result.update(dict(zip(list(grid_ranges.keys()), best_grid_params)))
 
-    best_params, (best_mean, best_std) = max(results.items(), key=lambda item: item[1][0])
-    print(f"{best_params}: {best_mean}, {best_std}")
+        # best_params, (best_mean, best_std) = max(results.items(), key=lambda item: item[1][0])
+        # print(f"{best_params}: {best_mean}, {best_std}")
 
-    with open(os.path.join(output_path, f"{job_id}.json"), "w") as f:
-        json.dump(results, f)
+        with open(file_path, "r+") as f:
+            json_list = json.load(f)
+
+            json_list.append(new_result)
+            f.seek(0)
+            f.write(json.dumps(json_list))
+            f.truncate()
 
 
 if __name__ == "__main__":
