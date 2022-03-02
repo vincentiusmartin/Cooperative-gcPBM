@@ -123,7 +123,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
     grid = list(itertools.product(*grid_ranges.values()))
 
     batch_size = 64
-    epochs = 30
+    epochs = 50
 
     random_state = 1239283591
     cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,

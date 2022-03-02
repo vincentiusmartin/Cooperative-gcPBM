@@ -3,9 +3,9 @@
 #
 # TO RUN: sbatch -p compsci-gpu -gres:1 train_and_evaluate.sh
 
-# (2 * 6 * 2) * (1 + 4) = 120
+# (2 * 5 * 2)(1 + 4) = 20 * 5 = 100
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=0-119%8
+#SBATCH --array=0-99%8
 #SBATCH --mail-type=END
 #SBATCH --output=dl.out
 
@@ -19,13 +19,11 @@ architectures=("one_layer_cnn" "two_layer_cnn")  # 2
 
 experiments=("ets1_ets1" "ets1_runx1")  # 2
 
-kernel_sizes=(4 8 12 16 20 24)  # 6
+kernel_sizes=(4 8 12 16 20 24)  # 5
 
 kernel2_sizes=(4 8 12 16) # 4
 
 mers=(2 3)  # 2
-
-# 2 * 2 * 7 * 2 = 55
 
 # for loop over models, feature sets, and models
 args=()
