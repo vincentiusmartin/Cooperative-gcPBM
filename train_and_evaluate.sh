@@ -31,7 +31,7 @@ for experiment in "${experiments[@]}"; do
   for architecture in "${architectures[@]}"; do
     for mer in "${mers[@]}"; do
       for kernel_size in "${kernel_sizes[@]}"; do
-        if [ "${architecture}" = "two_layer_cnn" ]
+        if [ "${architecture}" = "two_layer_cnn" ] || [ "${architecture}" = "multi_input_two_layer_cnn" ]
         then
           for kernel2_size in "${kernel2_sizes[@]}"; do
             args+=("${experiment} ${architecture} ${mer} ${kernel_size} ${kernel2_size}")

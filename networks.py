@@ -139,6 +139,6 @@ class TwoLayerMultiInputCNN(nn.Module):
         X1 = self.conv_layer(X)
         X1 = self.conv2_layer(X1)
         X1 = self.flatten(X1)
-        X = torch.cat((X, X1))
+        X = torch.cat((self.flatten(X), self.flatten(X1)))
         X = self.dense_layer(X)
         return X
