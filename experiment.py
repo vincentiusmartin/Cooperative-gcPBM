@@ -28,9 +28,9 @@ architecture_maps = {
         "model": TwoLayerCNN,
         "params": ("kernel_size", "kernel2_size"),
         "grid": {
-            "conv_filters": [16, 32, 64, 128, 256],
-            "conv2_filters": [16, 32, 64, 128, 256],
-            "fc_layer_nodes": [128, 256, 512],
+            "conv_filters": [32, 64, 128, 256, 512],
+            "conv2_filters": [32, 64, 128, 256, 512],
+            "fc_layer_nodes": [128, 256, 512, 1024],
         },
     },
     "multi_input_one_layer_cnn": {
