@@ -87,7 +87,8 @@ class MultiInputCNN(nn.Module):
 
         fc_node_count = fc_node_count
         self.dense_layer = nn.Sequential(
-            nn.Linear((padded_length - kernel_size + 1)*conv_filters + length, fc_node_count),
+            nn.Linear((padded_length - kernel_size + 1)*conv_filters + in_channels*length,
+                      fc_node_count),
             nn.ReLU(),
             nn.Dropout(.5),
             nn.Linear(fc_node_count, 128),
@@ -99,7 +100,8 @@ class MultiInputCNN(nn.Module):
     def forward(self, X):
         X1 = self.conv_layer(X)
         X1 = self.flatten(X1)
-        X = torch.cat((X, X1))
+        X = self.flatten(X)
+        X = torch.cat((X, X1), 1)
         X = self.dense_layer(X)
         return X
 
@@ -125,8 +127,8 @@ class TwoLayerMultiInputCNN(nn.Module):
 
         fc_node_count = fc_node_count
         self.dense_layer = nn.Sequential(
-            nn.Linear((padded_length - kernel_size + 1 - kernel2_size + 1)*conv2_filters + length,
-                      fc_node_count),
+            nn.Linear((padded_length - kernel_size + 1 - kernel2_size + 1)*conv2_filters
+                      + in_channels*length, fc_node_count),
             nn.ReLU(),
             nn.Dropout(.5),
             nn.Linear(fc_node_count, 128),
@@ -139,6 +141,7 @@ class TwoLayerMultiInputCNN(nn.Module):
         X1 = self.conv_layer(X)
         X1 = self.conv2_layer(X1)
         X1 = self.flatten(X1)
-        X = torch.cat((self.flatten(X), self.flatten(X1)))
+        X = self.flatten(X)
+        X = torch.cat((X, X1), 1)
         X = self.dense_layer(X)
         return X
