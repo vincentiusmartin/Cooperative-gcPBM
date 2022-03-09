@@ -20,7 +20,7 @@ architectures=( "two_layer_cnn" )
 
 experiments=("ets1_ets1" "ets1_runx1")  # 2
 
-kernel_sizes=(4 8 12 16 20 24)  # 5
+kernel_sizes=(4 8 12 16)  # 5
 
 kernel2_sizes=(4 8 12 16) # 4
 

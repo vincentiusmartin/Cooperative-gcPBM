@@ -28,9 +28,9 @@ architecture_maps = {
         "model": TwoLayerCNN,
         "params": ("kernel_size", "kernel2_size"),
         "grid": {
-            "conv_filters": [32, 64, 128, 256, 512],
-            "conv2_filters": [32, 64, 128, 256, 512],
-            "fc_layer_nodes": [128, 256, 512, 1024],
+            "conv_filters": [256, 512, 1024, 2048],
+            "conv2_filters": [256, 512, 1024, 2048],
+            "fc_layer_nodes": [128, 256, 512, 1024, 2048],
         },
     },
     "multi_input_one_layer_cnn": {
@@ -154,10 +154,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
         cv_max_validate_acc = []
         for j, (train_data, validate_data) in enumerate(cross_validation_splits):
             torch.manual_seed(random_state)
-            print(f"cross-validation: {j+1}")
 
-            print(grid_params)
-            print(params)
             net = NeuralNetwork(*grid_params, mers=mers, **params).to(device)
             train_dataloader = DataLoader(train_data, batch_size=batch_size)
             validate_dataloader = DataLoader(validate_data, batch_size=batch_size)
@@ -183,8 +180,6 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
     best_grid_params = max(cv_means, key=lambda x: x[1])[0]
 
-    print(best_grid_params)
-
     file_path = os.path.join(output_path, f"task_{job_id}.json")
 
     for i, random_state in enumerate(
@@ -198,7 +193,6 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
         cv_max_validate_acc = []
         for j, (train_data, validate_data) in enumerate(cross_validation_splits):
             torch.manual_seed(random_state)
-            print(f"cross-validation: {j+1}")
 
             net = NeuralNetwork(*best_grid_params, mers=mers, **params).to(device)
             train_dataloader = DataLoader(train_data, batch_size=batch_size)
