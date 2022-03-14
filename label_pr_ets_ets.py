@@ -22,21 +22,6 @@ def assign_label(l1, l2):
     else:
         return "ambiguous"
 
-    # if l1 == "fail_cutoff" or l2 == "fail_cutoff":
-    #     return "fail_cutoff"
-    # elif l1 == "anticooperative" and l2 == "anticooperative":
-    #     return "anticooperative"
-    # elif (l1 == "cooperative" and l2 == "cooperative") or \
-    #      (l1 == "cooperative" and l2 == "ambiguous") or \
-    #      (l1 == "ambiguous" and l2 == "cooperative"):
-    #     return "cooperative"
-    # elif (l1 == "independent" and l2 == "independent") or \
-    #      (l1 == "independent" and l2 == "ambiguous") or \
-    #      (l1 == "ambiguous" and l2 == "independent"):
-    #     return "independent"
-    # else:
-    #     return "ambiguous"
-
 def plot_pval(input, path, ori):
     df = input.copy()
     dfin = pd.DataFrame(df[(df["label_%s" % ori] != "below_cutoff") & (df["label_%s" % ori] != "anticooperative")])[["p_%s"%ori, "label"]]
@@ -49,8 +34,6 @@ def plot_pval(input, path, ori):
     plt.clf()
 
 def create_cooplbl(indivsum, twosites, pcutoff, pambig):
-    """
-    """
     p_coop = st.wilcox(twosites, indivsum, "greater")
     p_anti = st.wilcox(twosites, indivsum, "less")
     if p_coop < pcutoff:
