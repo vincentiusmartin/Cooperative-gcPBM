@@ -1,29 +1,34 @@
 # Cooperative-gcPBM
 The pipeline for analyzing cooperative genomic context protein binding microarray (cooperative gcPBM) data
 
+All input and processed files, including figures, are available in: https://www.dropbox.com/sh/x136g6plm2i6i7q/AAA-KAGtxAMu1hpV50dFi8ZEa?dl=0
+
 ## Generate clean probe files
 Code: `clean_file.py`
 
 Take as input the raw probe files and generate csv files containing the required informations for the pipeline:
-Probe Name,
-Sequence,
-Probe intensity, type (wt/m1/m2/m3), replicate ids, orientation (o1 for original)
+1. Name: Probe name
+2. Sequence: Probe sequence
+3. intensity: TF binding levels
+4. type: Mutation type: wt (wild type), m1/m2 (one site mutated), m3 (two sites mutated). Or negctrl for negative controls.
+5. rep: Replicates
+6. ori: Orientation of the sequence
 
 Output:
 1. Clean probe file with the fields mentioned above
 2. Negative control probe file
 
 Running the code:
-- ETS1-ETS1: `python3 clean_file.py data/probefiles/raw/ETS1_ETS1.txt -k "ets1" -e "dist|weak" -g`
+- ETS1-ETS1: `python3 clean_file.py data/probe_files/raw/ETS1_ETS1.txt -k "ets1" -e "dist|weak" -g`
 - ETS1-RUNX1:
-  - ETS1 only chamber: `python3 clean_file.py data/probefiles/raw/ETS1_only.txt -k "all_clean_seqs" -n "negative_controls" -f`
-  - ETS1-RUNX1 chamber: `python3 clean_file.py data/probefiles/raw/ETS1_RUNX1.txt -k "all_clean_seqs" -n "negative_controls" -f`
+  - ETS1 only chamber: `python3 clean_file.py data/probe_files/raw/ETS1_only.txt -k "all_clean_seqs" -n "negative_controls" -f`
+  - ETS1-RUNX1 chamber: `python3 clean_file.py data/probe_files/raw/ETS1_RUNX1.txt -k "all_clean_seqs" -n "negative_controls" -f`
 - RUNX1-ETS1:
-  - RUNX1 only chamber: `python3 clean_file.py data/probefiles/raw/RUNX1_only.txt -k "all_clean_seqs" -n "negative_controls" -f`
-  - RUNX1-ETS1 chamber: `python3 clean_file.py data/probefiles/raw/RUNX1_ETS1.txt -k "all_clean_seqs" -n "negative_controls" -f`
+  - RUNX1 only chamber: `python3 clean_file.py data/probe_files/raw/RUNX1_only.txt -k "all_clean_seqs" -n "negative_controls" -f`
+  - RUNX1-ETS1 chamber: `python3 clean_file.py data/probe_files/raw/RUNX1_ETS1.txt -k "all_clean_seqs" -n "negative_controls" -f`
 
 
-## ETS1-ETS1:
+## ETS1-ETS1 analysis pipeline:
 1. **Labeling the probe data for ETS1-ETS1:**
 label_pr_ets_ets.py
 
