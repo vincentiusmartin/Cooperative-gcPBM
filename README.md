@@ -29,11 +29,14 @@ Run:
 
 
 ## ETS1-ETS1 analysis pipeline:
-1. **Label the probe data for ETS1-ETS1:**
+### 1. Label the probe data for ETS1-ETS1 ###
+
 Label sequences as cooperative/ambiguous/independent
 
 Code: `label_pr_ets_ets.py`
+
 Run: `python3 label_pr_ets_ets.py data/probe_files/clean/ETS1_ETS1_pr_clean.csv -n data/probe_files/clean/ETS1_ETS1_neg_clean.csv -f`
+
 Additional arguments: `python3 label_pr_ets_ets.py -h`
 
 Outputs:
