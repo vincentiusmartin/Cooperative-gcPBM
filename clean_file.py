@@ -4,7 +4,7 @@ from pathlib import Path
 from difflib import SequenceMatcher
 
 import coopgcpbm.arranalysis as arr
-import coopgcpbm.bio as bio
+import util.bio as bio
 
 def fix_naming(df):
     df = df.drop(columns=["ori"])
