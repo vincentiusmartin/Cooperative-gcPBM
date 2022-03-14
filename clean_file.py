@@ -53,13 +53,6 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--probeid', action="store_true", dest="prbid", help='include probe id in the output')
     args = parser.parse_args()
 
-    # python3 clean_file.py input/original/Ets1_Ets1.txt -k "ets1" -e "dist|weak" -g
-    # python3 clean_file.py input/original/Ets1_Ets1_validation.txt -k "Coop2Ets" -l "ID" -c "Name,type,ori,rep" -d "Name,ori,rep"
-    # python3 clean_file.py input/original/Ets1_only.txt -k "all_clean_seqs" -n "negative_controls" -f
-    # python3 clean_file.py input/original/Ets1_Runx1.txt -k "all_clean_seqs" -n "negative_controls" -f
-    # python3 clean_file.py input/original/Runx1_only.txt -k "all_clean_seqs" -n "negative_controls" -f
-    # python3 clean_file.py input/original/Runx1_Ets1.txt -k "all_clean_seqs" -n "negative_controls" -f
-
     pd.set_option("display.max_columns",None)
     filename = Path(args.path).stem
     df, neg = arr.read_chamber_file(args.path, includekey=args.key, keycol=args.keycol, negkey=args.negkey, excludekey=args.exkey,
