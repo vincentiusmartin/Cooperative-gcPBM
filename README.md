@@ -76,11 +76,7 @@ Output files:
 1. `ets1_ets1_rfmodel.sav`: pickle file with the random forest model trained on ETS1-ETS1 data
 2. `auc_all.png`: AUC curve with the model performance
 
-4. **Generate Random Forest model ETS1-ETS1 using sequence features:**
-gen_posmdl.py
-
-5. **Shape analysis for ETS1-ETS1:**
-shape_analysis.py
+Example outputs, see: `data/analysis_files/ETS1-ETS1/model`
 
 ## Ets1-Runx1
 1. **Labeling the probe data for Ets1-Runx1:**
@@ -96,6 +92,15 @@ genmodel_ets_ets.py
 gen_posmdl.py
 
 5. **Shape analysis for Ets1-Runx1:**
+shape_analysis.py
+
+## Shape analysis for ETS1-ETS1 or ETS1-RUNX1
+
+### 1. Generate Random Forest model ETS1-ETS1 using sequence features ###
+
+Code: `gen_posmdl.py`
+
+### 2. Shape analysis for ETS1-ETS1 ###
 shape_analysis.py
 
 ## Make a scatter boxplot
