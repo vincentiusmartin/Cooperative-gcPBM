@@ -73,7 +73,7 @@ Run: `python3 genmodel_ets_ets.py data/analysis_files/ETS1_ETS1/training/train_e
 Note: `rf_param_grid` is currently hardcoded, please change the parameters directly in the code as needed
 
 Output files:
-1. `ets1_ets1_rfmodel.sav`: pickle file with the random forest model trained on ETS1-ETS1 data
+1. `ets1_ets1_rfmodel.sav`: pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, and strength features
 2. `auc_all.png`: AUC curve with the model performance
 
 Example outputs, see: `data/analysis_files/ETS1-ETS1/model`
@@ -96,12 +96,30 @@ shape_analysis.py
 
 ## Shape analysis for ETS1-ETS1 or ETS1-RUNX1
 
-### 1. Generate Random Forest model ETS1-ETS1 using sequence features ###
+### 1. Generate Random Forest model using sequence or shape features ###
+
+The code requires DNAShape R package and imported using `rpy2`. Please install the package as described in: https://bioconductor.org/packages/release/bioc/html/DNAshapeR.html
 
 Code: `gen_posmdl.py`
 
-### 2. Shape analysis for ETS1-ETS1 ###
-shape_analysis.py
+Run:
+- ETS1-ETS1: `python3 gen_posmdl.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv -a site_str -b site_wk -s relative -r -o`
+- ETS1-RUNX1: `python3 gen_posmdl.py data/analysis_files/ETS1_RUNX1/training/train_ets1_ets1.tsv -a ets1 -b runx1 -s positional`
 
-## Make a scatter boxplot
-scatter_boxplot.py
+Output files:
+1. Pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, shape, and sequence features
+2. A figure with the ROC curve showing the model performance
+
+### 2. Shape analysis for ETS1-ETS1 ###
+
+Create summary motif and shape figures for all sequences in the training data, also outputs the list of sequences for each configuration.
+
+Code: `shape_analysis.py`
+
+Run:
+- ETS1-ETS1: `python3 shape_analysis.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv -p site_str_pos,site_wk_pos`
+- ETS1-RUNX1: `python3 shape_analysis.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv -p ets1_pos,runx1_pos`
+
+Example outputs, see:
+- ETS1-ETS1: `data/analysis_files/ETS1_ETS1/shape_out`
+- ETS1-RUNX1: `data/analysis_files/ETS1_RUNX1/shape_out`

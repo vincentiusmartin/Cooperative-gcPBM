@@ -1,9 +1,12 @@
 import pandas as pd
-import chip2probe.modeler.dnashape as ds
-from chip2probe.util import bio
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 import logomaker
+import argparse
+import os
+
+import coopgcpbm.modeler.dnashape as ds
+from util import bio
 
 def align(seq, move):
     """
@@ -16,21 +19,23 @@ def align(seq, move):
         return seq[mv:] + bio.gen_randseq(mv)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = 'Shape feature analysis')
+    parser.add_argument(action="store", dest="path", type=str, help='Path to training data')
+    parser.add_argument('-p', '--poscols', action="store", dest="poscols", type=str,  help='Column name for the binding site positions, separated by comma')
+    parser.add_argument('-o', '--outdir', action="store", dest="outdir", type=str, default="shape_out", help='Output directory')
+    args = parser.parse_args()
+
     params = {'axes.labelsize': 22,
           'axes.titlesize': 18,
           "xtick.labelsize" : 15, "ytick.labelsize" : 15 , "axes.labelsize" : 14}
     plt.rcParams.update(params)
-    pd.set_option("display.max_rows",None)
 
-    basepath = "output/Ets1Runx1"
-    df = pd.read_csv("%s/training/train_ets1_runx1.tsv"%basepath, sep="\t")
-    poscol1 = "ets1_pos"
-    poscol2 = "runx1_pos"
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
 
-    # basepath = "output/Ets1Ets1_v2"
-    # df = pd.read_csv("%s/training/train_ets1_ets1.tsv"%basepath, sep="\t")
-    # poscol1 = "site_str_pos"
-    # poscol2 = "site_wk_pos"
+
+    df = pd.read_csv(args.path, sep="\t")
+    poscol1, poscol2 = args.poscols.split(",")
 
     df["s1pos"] = df.apply(lambda x: x[poscol1] if x[poscol1] < x[poscol2] else x[poscol2], axis=1)
     df["s2pos"] = df.apply(lambda x: x[poscol1] if x[poscol1] > x[poscol2] else x[poscol2], axis=1)
@@ -43,9 +48,8 @@ if __name__ == "__main__":
     ds = ds.DNAShape(fastadict)
     labels = ["independent", "cooperative"]
 
-    # print(df.groupby(["distance", "orientation",'label'])[["Name"]].count())
     labels = df["label"].unique()
-    with PdfPages("%s/model/shapepos/motifs.pdf" % basepath) as pdf:
+    with PdfPages("%s/motifs.pdf" % args.outdir) as pdf:
         for d in dist:
             curdf_dist = df[df['distance'] == d]
             fig = plt.figure(figsize=(12,12))
@@ -73,7 +77,7 @@ if __name__ == "__main__":
             pdf.savefig(fig)
             plt.close()
 
-    with PdfPages("%s/model/shapepos/shape_plots.pdf" % basepath) as pdf:
+    with PdfPages("%s/shape_plots.pdf" % args.outdir) as pdf:
         for d in dist:
             curdf_dist = pd.DataFrame(df[df['distance'] == d])
             for ori in oris: # oris
@@ -90,6 +94,5 @@ if __name__ == "__main__":
                 oristr = ori.replace("/","")
                 for l in labels:
                     curdflbl = curdf[curdf["label"] == l]
-                    with open("%s/model/shapepos/seqs_dist%d_%s_%s.txt"%(basepath,d,oristr,l),'w') as f:
+                    with open("%s/seqs_dist%d_%s_%s.txt"%(args.outdir,d,oristr,l),'w') as f:
                         f.write("\n".join(curdflbl["seqalign"].tolist()))
-                break
