@@ -1,13 +1,13 @@
 import os
 import argparse
 import pandas as pd
-import chip2probe.modeler.plotlib as pl
 from sklearn import ensemble, tree
 import subprocess
 import pickle
 
 from coopgcpbm.modeler.cooptrain import CoopTrain
 from coopgcpbm.modeler.bestmodel import BestModel
+import coopgcpbm.modeler.plotlib as pl
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Generate ETS1-ETS1 random forest models')
