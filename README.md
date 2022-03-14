@@ -19,7 +19,7 @@ Output files:
 2. A negative control probe file
 
 Run:
-- ETS1-ETS1: `python3 clean_file.py data/probe_files/raw/ETS1_ETS1.txt -k "ets1" -e "dist|weak" -g`
+- ETS1-ETS1: `python3 clean_file.py data/probe_files/raw/ETS1_ETS1.txt -k "ETS1" -e "dist|weak" -g`
 - ETS1-RUNX1:
   - ETS1 only chamber: `python3 clean_file.py data/probe_files/raw/ETS1_only.txt -k "all_clean_seqs" -n "negative_controls" -f`
   - ETS1-RUNX1 chamber: `python3 clean_file.py data/probe_files/raw/ETS1_RUNX1.txt -k "all_clean_seqs" -n "negative_controls" -f`
@@ -42,8 +42,8 @@ Additional arguments: `python3 label_pr_ets_ets.py -h`
 Output files:
 1. `ets_ets_seqlabeled.csv`: Sequences with labels, this file is used as the main input for the subsequent analysis
 2. `negdf.csv`: median intensity for each negative control sequence
-3. `ets1_ets1_indiv.csv`: intensity for each combination of ETS1 binding to individual sites (i.e. m1+m2)
-4. `ets1_ets1_two.csv`: intensity for each combination of ETS1 binding to two sites (i.e. wt)
+3. `ETS1_ETS1_indiv.csv`: intensity for each combination of ETS1 binding to individual sites (i.e. m1+m2)
+4. `ETS1_ETS1_two.csv`: intensity for each combination of ETS1 binding to two sites (i.e. wt)
 5. `lbled_both.csv`: each row contain labels for each probe in orientations o1, o2, and also a label taking into account labels in both orientations
 6. `ets_ets_m1m2m3wt.csv`: Median binding intensity for each sequence type
 7. `lbled_o1_selected.csv`: Median intensity from combinations of binding to individual and two sites in orientation o1
@@ -57,10 +57,10 @@ Description: Generate training data with all the features and labels for the seq
 
 Code: `traingen_ets_ets.py`
 
-Run: `python3 traingen_ets_ets.py data/analysis_files/ETS1_ETS1/labeled/ets_ets_seqlabeled.csv -p data/sitemodels/ets1.txt -k data/sitemodels/Ets1_kmer_alignment.txt`
+Run: `python3 traingen_ets_ets.py data/analysis_files/ETS1_ETS1/labeled/ets_ets_seqlabeled.csv -p data/sitemodels/ETS1.txt -k data/sitemodels/ETS1_kmer_alignment.txt`
 
 Output files:
-1. `train_ets1_ets1.tsv`: Training data for ETS1-ETS1
+1. `train_ETS1_ETS1.tsv`: Training data for ETS1-ETS1
 2. Three figure files with the distributions for distance, orientation, and strength features
 
 Example outputs, see: `data/analysis_files/ETS1-ETS1/training`
@@ -68,46 +68,44 @@ Example outputs, see: `data/analysis_files/ETS1-ETS1/training`
 ### 3. Generate Random Forest model for ETS1-ETS1 ###
 Code: `genmodel_ets_ets.py`
 
-Run: `python3 genmodel_ets_ets.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv`
+Run: `python3 genmodel_ets_ets.py data/analysis_files/ETS1_ETS1/training/train_ETS1_ETS1.tsv`
 
 Note: `rf_param_grid` is currently hardcoded, please change the parameters directly in the code as needed
 
 Output files:
-1. `ets1_ets1_rfmodel.sav`: pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, and strength features
+1. `ETS1_ETS1_rfmodel.sav`: pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, and strength features
 2. `auc_all.png`: AUC curve with the model performance
 
 Example outputs, see: `data/analysis_files/ETS1-ETS1/model`
 
-## Ets1-Runx1
-1. **Labeling the probe data for Ets1-Runx1:**
-label_pr_ets_ets.py
+## ETS1-RUNX1 and RUNX1-ETS1
+### 1. Labeling the probe data for ETS1-RUNX1 ###
 
-2. **Generate training data Ets1-Runx1:**
-traingen_ets_ets.py
+Code: `label_pr_ets_runx.py`
 
-3. **Generate Random Forest model Ets1-Runx1:**
-genmodel_ets_ets.py
+### 2. Generate training data ETS1-RUNX1 ###
 
-4. **Generate Random Forest model Ets1-Runx1 using sequence features:**
-gen_posmdl.py
+Code: `traingen_ets_runx.py`
 
-5. **Shape analysis for Ets1-Runx1:**
-shape_analysis.py
+### 3. Generate Random Forest model ETS1-RUNX1 ###
+
+Code: `genmodel_ets_runx.py`
+
 
 ## Shape analysis for ETS1-ETS1 or ETS1-RUNX1
 
-### 1. Generate Random Forest model using sequence or shape features ###
+### 1. Generate Random Forest model using sequence and shape features ###
 
 The code requires DNAShape R package and imported using `rpy2`. Please install the package as described in: https://bioconductor.org/packages/release/bioc/html/DNAshapeR.html
 
 Code: `gen_posmdl.py`
 
 Run:
-- ETS1-ETS1: `python3 gen_posmdl.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv -a site_str -b site_wk -s relative -r -o`
-- ETS1-RUNX1: `python3 gen_posmdl.py data/analysis_files/ETS1_RUNX1/training/train_ets1_ets1.tsv -a ets1 -b runx1 -s positional`
+- ETS1-ETS1: `python3 gen_posmdl.py data/analysis_files/ETS1_ETS1/training/train_ETS1_ETS1.tsv -a site_str -b site_wk -s relative -r -o`
+- ETS1-RUNX1: `python3 gen_posmdl.py data/analysis_files/ETS1_RUNX1/training/train_ETS1_ETS1.tsv -a ETS1 -b RUNX1 -s positional`
 
 Output files:
-1. Pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, shape, and sequence features
+1. A pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, shape, and sequence features
 2. A figure with the ROC curve showing the model performance
 
 ### 2. Shape analysis for ETS1-ETS1 ###
@@ -117,8 +115,8 @@ Create summary motif and shape figures for all sequences in the training data, a
 Code: `shape_analysis.py`
 
 Run:
-- ETS1-ETS1: `python3 shape_analysis.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv -p site_str_pos,site_wk_pos`
-- ETS1-RUNX1: `python3 shape_analysis.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv -p ets1_pos,runx1_pos`
+- ETS1-ETS1: `python3 shape_analysis.py data/analysis_files/ETS1_ETS1/training/train_ETS1_ETS1.tsv -p site_str_pos,site_wk_pos`
+- ETS1-RUNX1: `python3 shape_analysis.py data/analysis_files/ETS1_RUNX1/training/train_ETS1_RUNX1.tsv -p ETS1_pos,RUNX1_pos`
 
 Example outputs, see:
 - ETS1-ETS1: `data/analysis_files/ETS1_ETS1/shape_out`
