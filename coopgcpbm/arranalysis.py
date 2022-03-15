@@ -151,7 +151,6 @@ def plot_chamber_corr(dfx, dfy, xlab="Chamber 1", ylab="Chamber 2",
         dfy = dfy.groupby([namecol] + extrajoincols)[[valcol]].median().reset_index()
 
     dfcombined = dfx.merge(dfy, on=joincols)[joincols + ["%s_x"%valcol, "%s_y"%valcol]]
-    dfcombined.to_csv("cmb.csv",index=False)
 
     if log:
         dfcombined["%s_x"%valcol] = np.log(dfcombined["%s_x"%valcol])

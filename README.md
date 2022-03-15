@@ -81,15 +81,30 @@ Example outputs, see: `data/analysis_files/ETS1-ETS1/model`
 ## ETS1-RUNX1 and RUNX1-ETS1
 ### 1. Labeling the probe data for ETS1-RUNX1 ###
 
+Description: Label each sequence as cooperative/ambiguous/independent
+
 Code: `label_pr_ets_runx.py`
+
+Run: `python3 label_pr_ets_runx.py`
+
+Note: there are a lot of parameters for the script and currently they are still hardcoded, please check the header in `main`.
+
+Output files:
+1. `seqlbled_ets1_runx1.tsv`: Sequences with labels, this file is used as the main input for the subsequent analysis
 
 ### 2. Generate training data ETS1-RUNX1 ###
 
 Code: `traingen_ets_runx.py`
 
+Run: `python3 traingen_ets_runx.py`
+
 ### 3. Generate Random Forest model ETS1-RUNX1 ###
 
 Code: `genmodel_ets_runx.py`
+
+Run:
+- ETS1-RUNX1: `python3 traingen_ets_runx.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv`
+- RUNX1-ETS1: `python3 traingen_ets_runx.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv`
 
 
 ## Shape analysis for ETS1-ETS1 or ETS1-RUNX1
