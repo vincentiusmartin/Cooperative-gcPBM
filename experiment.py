@@ -28,9 +28,9 @@ architecture_maps = {
         "model": TwoLayerCNN,
         "params": ("kernel_size", "kernel2_size"),
         "grid": {
-            "conv_filters": [256, 512, 1024, 2048],
-            "conv2_filters": [256, 512, 1024, 2048],
-            "fc_layer_nodes": [128, 256, 512, 1024, 2048],
+            "conv_filters": [256, 512, 1024, 2048, 4096],
+            "conv2_filters": [256, 512, 1024, 2048, 4096],
+            "fc_layer_nodes": [256, 512, 1024, 2048],
         },
     },
     "multi_input_one_layer_cnn": {
@@ -48,6 +48,16 @@ architecture_maps = {
             "conv_filters": [16, 32, 64, 128, 256],
             "conv2_filters": [16, 32, 64, 128, 256],
             "fc_layer_nodes": [128, 256, 512],
+        },
+    },
+    "three_layer_cnn": {
+        "model": TwoLayerCNN,
+        "params": ("kernel_size", "kernel2_size", "kernel3_size"),
+        "grid": {
+            "conv_filters": [256, 512, 1024, 2048],
+            "conv2_filters": [256, 512, 1024, 2048],
+            "conv3_filters": [256, 512, 1024, 2048],
+            "fc_layer_nodes": [256, 512, 1024],
         },
     },
 }

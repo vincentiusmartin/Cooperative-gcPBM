@@ -1,11 +1,12 @@
 #!/bin/bash
 #
 #
-# TO RUN: sbatch -p compsci-gpu -gres:1 train_and_evaluate.sh
+# TO RUN:
+# sbatch -p compsci-gpu --gres=gpu:1 train_and_evaluate.sh
 
-# 2 * 5 * 2 * 4 = 80
+# 2 * 4 * 4 * 4 * 2 = 256
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=0-79%8
+#SBATCH --array=0-255%8
 #SBATCH --mail-type=END
 #SBATCH --output=dl.out
 
@@ -15,14 +16,16 @@ mkdir -p "$outdir"
 
 data_path="/usr/xtmp/kpinheiro/data"
 
-architectures=( "two_layer_cnn" )
+architectures=( "three_layer_cnn" )  # 1
 # "multi_input_one_layer_cnn" "multi_input_two_layer_cnn") #"one_layer_cnn" "two_layer_cnn")  # 2
 
 experiments=("ets1_ets1" "ets1_runx1")  # 2
 
-kernel_sizes=(4 8 12 16)  # 5
+kernel_sizes=(4 8 12 16)  # 4
 
 kernel2_sizes=(4 8 12 16) # 4
+
+kernel3_sizes=(4 8 12 16) # 4
 
 mers=(2 3)  # 2
 
@@ -32,10 +35,17 @@ for experiment in "${experiments[@]}"; do
   for architecture in "${architectures[@]}"; do
     for mer in "${mers[@]}"; do
       for kernel_size in "${kernel_sizes[@]}"; do
-        if [ "${architecture}" = "two_layer_cnn" ] || [ "${architecture}" = "multi_input_two_layer_cnn" ]
+        if [ "${architecture}" = "two_layer_cnn" ] || [ "${architecture}" = "multi_input_two_layer_cnn" ] || [ "${architecture}" = "three_layer_cnn" ]
         then
           for kernel2_size in "${kernel2_sizes[@]}"; do
+            if [ "${architecture}" = "three_layer_cnn" ]
+            then
+              for kernel3_size in "${kernel3_sizes[@]}"; do
+                args+=("${experiment} ${architecture} ${mer} ${kernel_size} ${kernel2_size} ${kernel3_size}")
+              done
+            else
             args+=("${experiment} ${architecture} ${mer} ${kernel_size} ${kernel2_size}")
+            fi
           done
         else
         args+=("${experiment} ${architecture} ${mer} ${kernel_size}")
