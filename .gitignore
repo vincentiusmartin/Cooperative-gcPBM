@@ -1,4 +1,6 @@
 .DS_Store
 __pycache__
 
-data
+data/analysis_files
+data/probe_files
+data/sitemodels
