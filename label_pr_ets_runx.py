@@ -24,12 +24,12 @@ def get_normalization_coefs(df1, df2, predictor, xlab, ylab):
     """
     Using m1|m2 which are sequences with sites mutated
     """
-    oneseqdf = get_one_site_seq(df1, predictor) # pd.read_csv("input/seq_w1_ets_site.csv") # get_one_site_seq(df1, predictor)
+    oneseqdf = get_one_site_seq(df1, predictor)
     oneseqdf["Sequence"] = oneseqdf["Sequence"].str[:36]
     med1, med2 = get_med_m1m2(df1, oneseqdf), get_med_m1m2(df2, oneseqdf)
-    arr.plot_chamber_corr(med1, med2, median=False,
-                           extrajoincols=["ori"], path="m1m2_all_log.pdf", showlog=True,
-                           title="Correlation between chambers", xlab=xlab, ylab=ylab, valcol="intensity")
+    #arr.plot_chamber_corr(med1, med2, median=False,
+    #                       extrajoincols=["ori"], path="m1m2_all_log.pdf", showlog=True,
+    #                       title="Correlation between chambers", xlab=xlab, ylab=ylab, valcol="intensity")
     medcomb = med1.merge(med2, on=["Name","Sequence","ori"])
     medcomb_csv = medcomb[["Name","Sequence","intensity_x", "intensity_y"]]
     medcmb = medcomb[["Name","ori", "intensity_x", "intensity_y"]]
@@ -46,7 +46,6 @@ def get_negcutoff(negdf_m, tf_str, slope, intercept, percentile):
             .median().reset_index() \
             .merge(seqnm, on="Name")[["Sequence","intensity"]]
 
-    negdf_m.to_csv("negdf.csv",index=False)
     return negdf_m[["intensity"]].quantile(percentile)
 
 # =======
@@ -103,26 +102,27 @@ if __name__ == "__main__":
     kompas_ets = Kompas("data/sitemodels/Ets1_kmer_alignment.txt", core_start = 11, core_end = 15, core_center = 12)
     kompas_runx = Kompas("data/sitemodels/Runx1_kmer_alignment.txt", core_start = 12, core_end = 17, core_center = 14)
 
+    # Note: m for main TF, mc for main and cooperator TF
+
     # ============ ETS1-RUNX1 ============
-    # m for main TF, mc for main and cooperator TF
-    ch_x =  "Ets1"
-    ch_y = "Ets1 + Runx1"
-    both_title = "Cooperative vs independent binding of Ets1-Runx1"
-    maintf = "ets1"
-    cooptf = "runx1"
-    df_m, neg_m = pd.read_csv("data/probe_files/clean/ETS1_only_pr_clean.csv"), pd.read_csv("data/probe_files/clean/ETS1_only_neg_clean.csv")
-    df_mc, neg_mc = pd.read_csv("data/probe_files/clean/ETS1_RUNX1_pr_clean.csv"), pd.read_csv("data/probe_files/clean/ETS1_RUNX1_neg_clean.csv")
-    colors = ["#b22222","#FFA07A"]
+    # ch_x =  "Ets1"
+    # ch_y = "Ets1 + Runx1"
+    # both_title = "Cooperative vs independent binding of Ets1-Runx1"
+    # maintf = "ets1"
+    # cooptf = "runx1"
+    # df_m, neg_m = pd.read_csv("data/probe_files/clean/ETS1_only_pr_clean.csv"), pd.read_csv("data/probe_files/clean/ETS1_only_neg_clean.csv")
+    # df_mc, neg_mc = pd.read_csv("data/probe_files/clean/ETS1_RUNX1_pr_clean.csv"), pd.read_csv("data/probe_files/clean/ETS1_RUNX1_neg_clean.csv")
+    # colors = ["#b22222","#FFA07A"]
 
     # ============ RUNX1-ETS1 ============
-    # ch_x =  "Runx1"
-    # ch_y = "Runx1 + Ets1"
-    # both_title = "Cooperative vs independent binding of Runx1-Ets1"
-    # maintf = "runx1"
-    # cooptf = "ets1"
-    # df_m, neg_m = pd.read_csv("input/probefiles/Runx1_only_pr_clean.csv"), pd.read_csv("input/probefiles/Runx1_only_neg_clean.csv")
-    # df_mc, neg_mc = pd.read_csv("input/probefiles/Runx1_Ets1_pr_clean.csv"), pd.read_csv("input/probefiles/Runx1_Ets1_neg_clean.csv")
-    # colors = ["#0343df","#75bbfd"]
+    ch_x =  "Runx1"
+    ch_y = "Runx1 + Ets1"
+    both_title = "Cooperative vs independent binding of Runx1-Ets1"
+    maintf = "runx1"
+    cooptf = "ets1"
+    df_m, neg_m = pd.read_csv("data/probe_files/clean/RUNX1_only_pr_clean.csv"), pd.read_csv("data/probe_files/clean/RUNX1_only_neg_clean.csv")
+    df_mc, neg_mc = pd.read_csv("data/probe_files/clean/RUNX1_ETS1_pr_clean.csv"), pd.read_csv("data/probe_files/clean/RUNX1_ETS1_neg_clean.csv")
+    colors = ["#0343df","#75bbfd"]
 
     oricoop = "er" if cooptf == "ets1" else "re"
 
@@ -135,22 +135,20 @@ if __name__ == "__main__":
 
     slope,intercept, onesitedf = get_normalization_coefs(df_m, df_mc, main_predictor, ch_x, ch_y)
     print("Normalization using y = %.2fx + %.2f" % (slope,intercept))
-    onesitedf.sort_values("Name") \
-             .rename(columns={'intensity_x':ch_x, "intensity_y":ch_y})[["Sequence",ch_x,ch_y]]  \
-             .to_csv("onesite.csv",index=False)
 
     cutoff = float(get_negcutoff(neg_m, cooptf, slope, intercept, neg_percentile))
     # cutoff = 412.568
     print("Negative control cutoff %.3f" % cutoff)
 
 
-    df_m = assign_ori_pos(df_m, kompas_ets, kompas_runx, "ets1", "runx1" , "er", "re") # pd.read_csv("%s_%s_main.csv" % (maintf, cooptf))
-    df_mc = assign_ori_pos(df_mc, kompas_ets, kompas_runx, "ets1", "runx1", "er", "re") # pd.read_csv("%s_%s_main_cooperator.csv" % (maintf, cooptf))
+    df_m = assign_ori_pos(df_m, kompas_ets, kompas_runx, "ets1", "runx1" , "er", "re")
+    df_mc = assign_ori_pos(df_mc, kompas_ets, kompas_runx, "ets1", "runx1", "er", "re")
     df_mc["unnormalized_intensity"] = df_mc["intensity"]
     df_mc["intensity"] = (df_mc["intensity"] - intercept)/slope
+
+    # Need to save this to avoid computing time in the subsequent process
     df_m.to_csv("%s_%s_main.csv" % (maintf, cooptf),index=False)
     df_mc.to_csv("%s_%s_main_cooperator.csv" % (maintf, cooptf),index=False)
-
     df_m = pd.read_csv("%s_%s_main.csv" % ( maintf, cooptf))
     df_mc = pd.read_csv("%s_%s_main_cooperator.csv" % ( maintf, cooptf))
 
@@ -211,19 +209,14 @@ if __name__ == "__main__":
 
     # filter out anticoop since we only have a few
     both_ori = both_ori[both_ori["label"] != "anticooperative"]
-    both_ori.sort_values("Name").to_csv("both_%s_%s.csv" % (maintf,cooptf), index=False)
-    plot_pval(both_ori, "pval.pdf")
     print("Number of distinct names, above cutoff, after orientation joining %d" % both_ori[both_ori["label"] != "below_cutoff"]["Name"].nunique())
 
     both_ori_plt = both_ori[["Name","intensity_x","intensity_y","unnormalized_intensity","label"]]
     both_ori_plt[both_ori_plt["label"] != "below_cutoff"].sort_values("Name").to_csv("both_ori_plt_%s_%s.csv" % (maintf,cooptf),index=False)
 
     both_ori_plt = pd.read_csv("both_ori_plt_%s_%s.csv" % (maintf,cooptf))
-    arr.plot_classified_labels(both_ori_plt, path="unnormalized_%s_%s.pdf" % (maintf,cooptf), col1="intensity_x", col2="unnormalized_intensity", title=both_title, xlab=ch_x, ylab=ch_y, plotnonsignif=False, labelnames=["cooperative","independent","anticoop"], colors=["black","black"], showlog=True, showlegend=False)
     arr.plot_classified_labels(both_ori_plt, path="normalized_%s_%s.pdf" % (maintf,cooptf), col1="intensity_x", col2="intensity_y",
             title=both_title, xlab=ch_x, ylab=ch_y, plotnonsignif=False, labelnames=["cooperative","independent","anticoop"], colors=colors, showlog=True)
-    arr.plot_classified_labels(both_ori_plt, path="normalized_%s_%s_black.pdf" % (maintf,cooptf), col1="intensity_x", col2="intensity_y",
-            title=both_title, xlab=ch_x, ylab=ch_y, plotnonsignif=False, labelnames=["cooperative","independent","anticoop"], colors=["black","black"], showlog=True, showlegend=False)
 
     # we use sequence where ets1 is on the left for simplicity
     nmsqmap = df_m[df_m["ori"] == "er"][["Name","Sequence"]].drop_duplicates()
@@ -231,7 +224,7 @@ if __name__ == "__main__":
     seq_er_intensity = both_ori_plt[both_ori_plt["label"] != "below_cutoff"].merge(nmsqmap, on="Name")[["Sequence","intensity_x","intensity_y","unnormalized_intensity","label"]] \
              .rename(columns={'intensity_x':ch_x, "unnormalized_intensity": "%s_unnormalized"%ch_y, "intensity_y":"%s_normalized"%ch_y}) \
              .drop_duplicates("Sequence")
-    seq_er_intensity.to_csv("seq_er_intensity.csv",index=False)
+    seq_er_intensity.to_csv("seq_%s_%s_intensity.csv" % (maintf,cooptf),index=False)
 
     print("Count per label",seq_er_intensity[["label","Sequence"]].groupby("label").count())
 
@@ -239,4 +232,4 @@ if __name__ == "__main__":
     all_labeled = name_info.merge(both_ori_plt[["Name","label"]], on="Name")
     all_labeled = all_labeled[all_labeled["label"] != "below_cutoff"].drop_duplicates("Sequence")
     all_labeled["distance"] = abs(all_labeled["%s_pos" % maintf] - all_labeled["%s_pos" % cooptf])
-    all_labeled.to_csv("seqlbled_%s_%s.tsv" % (maintf,cooptf), sep="\t", index=False, columns=["Name", "Sequence", "%s_pos" % maintf, "%s_start" % maintf, "%s_pos" % cooptf, "%s_start" % cooptf, "distance", "ori", "label"])
+    all_labeled.to_csv("%s_%s_seqlbled.tsv" % (maintf,cooptf), sep="\t", index=False, columns=["Name", "Sequence", "%s_pos" % maintf, "%s_start" % maintf, "%s_pos" % cooptf, "%s_start" % cooptf, "distance", "ori", "label"])

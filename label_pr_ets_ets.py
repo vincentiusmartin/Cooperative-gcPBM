@@ -67,9 +67,7 @@ if __name__ == "__main__":
     p_ambig = args.pambig
     fdrcorr = args.fdrcorr
 
-
     nmsqmap = df[(df["ori"] == "o1") & (df["type"] == "wt")][["Name","Sequence"]].drop_duplicates()
-
     dftype = df[["Name","intensity","type"]].groupby(["Name","type"]).mean().reset_index()
 
     dftype_med = dftype.groupby(["Name","type"]).median().reset_index().pivot(index='Name', columns='type')
@@ -83,7 +81,6 @@ if __name__ == "__main__":
     negdf = negdf[["Name","intensity"]].groupby("Name") \
             .median().reset_index() \
             .merge(seqnmneg, on="Name")[["Sequence","intensity"]]
-    negdf.to_csv("negdf.csv",index=False)
     cutoff = float(negdf[["intensity"]].quantile(neg_percentile))
     print("Negative control cutoff", cutoff)
 
@@ -113,21 +110,15 @@ if __name__ == "__main__":
     df["intensity"] = np.log(df["intensity"])
     lbled_both = labeled_dict["o1"].merge(labeled_dict["o2"], on="Name", suffixes=("_o1", "_o2"))
     lbled_both["label"] = lbled_both.apply(lambda x: assign_label(x["label_o1"], x["label_o2"]), axis=1)
-    lbled_both.to_csv("lbled_both.csv", index=False)
-    # plot_pval(lbled_both, "p_o1_dist.png", "o1")
 
     seqdf = df[(df["type"] == "wt") & (df["ori"] == "o1")][["Name","Sequence"]]
     seqlbled = lbled_both.merge(seqdf, on="Name")[["Name","Sequence","label","p_o1","label_o1","p_o2","label_o2"]].drop_duplicates()
     seqlbled.to_csv("ets_ets_seqlabeled.csv", index=False)
-    dftype_med.merge(seqlbled[seqlbled["label"] != "fail_cutoff"][["Name","label"]]).sort_values("Name")[["Sequence","m1", "m2", "m3", "wt", "label"]].to_csv("ets_ets_m1m2m3wt.csv",index=False)
     print("Label count", seqlbled["label"].value_counts())
 
     # plot both result in one orientation only; only take independent and cooperative since we have little to no anticooperative
     filt = lbled_both[(lbled_both['label'] != "fail_cutoff") & (lbled_both['label'] != "anticooperative")]
     lbled_one_ori = labeled_dict['o1'].merge(filt[["Name"]],on="Name")
-
-    lbled_one_ori.to_csv("lbled_o1_selected.csv", index=False)
-    lbled_one_ori = pd.read_csv("lbled_o1_selected.csv")
     arr.plot_classified_labels(lbled_one_ori[lbled_one_ori["label"] != "anticooperative"], col1="indiv_median", col2="two_median", plotnonsignif=False,
                        xlab="M1-M3+M2-M3", ylab="WT-M3", path="labeled_ets_ets_scatter.pdf", title="Cooperative vs independent binding of Ets1-Ets1",
                        labelnames=["cooperative","independent","anticooperative"], showlog=True)

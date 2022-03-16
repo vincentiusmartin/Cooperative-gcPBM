@@ -24,15 +24,17 @@ def predict_strength(train, pred, tfname, flanklen=0):
 if __name__ == "__main__":
     pd.set_option("display.max_rows",None)
 
-    lbled_path = "data/analysis_files/ETS1_RUNX1/labeled/seqlbled_ets1_runx1.tsv"
-    maintf = "ets1"
-    cooptf = "runx1"
-    color = ["#b22222","#FFA07A"]
+    # ========= INPUT FIELDS =========
 
-    # lbled_path = "%s/label_pr/seqlbled_runx1_ets1.tsv"
-    # maintf = "runx1"
-    # cooptf = "ets1"
-    # color = ["#0343df","#75bbfd"]
+    # lbled_path = "data/analysis_files/ETS1_RUNX1/labeled/ets1_runx1_seqlbled.tsv"
+    # maintf = "ets1"
+    # cooptf = "runx1"
+    # color = ["#b22222","#FFA07A"]
+
+    lbled_path = "data/analysis_files/RUNX1_ETS1/labeled/runx1_ets1_seqlbled.tsv"
+    maintf = "runx1"
+    cooptf = "ets1"
+    color = ["#0343df","#75bbfd"]
 
     if maintf == "ets1":
         pwm_main = PWM("data/sitemodels/%s.txt" % maintf, log=True, reverse=False)
@@ -40,6 +42,8 @@ if __name__ == "__main__":
     else:
         pwm_main = PWM("data/sitemodels/%s.txt" % maintf, 8, 17, log=True, reverse=True)
         pwm_coop = PWM("data/sitemodels/%s.txt" % cooptf, log=True, reverse=False)
+
+    # ======================================================
 
     train = pd.read_csv(lbled_path, sep="\t").drop_duplicates(subset=["Name"], keep="first")
     train = train[(train["label"] == "cooperative") | (train["label"] == "independent")]

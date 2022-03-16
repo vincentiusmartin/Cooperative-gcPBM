@@ -41,13 +41,9 @@ Additional arguments: `python3 label_pr_ets_ets.py -h`
 
 Output files:
 1. `ets_ets_seqlabeled.csv`: Sequences with labels, this file is used as the main input for the subsequent analysis
-2. `negdf.csv`: median intensity for each negative control sequence
-3. `ETS1_ETS1_indiv.csv`: intensity for each combination of ETS1 binding to individual sites (i.e. m1+m2)
-4. `ETS1_ETS1_two.csv`: intensity for each combination of ETS1 binding to two sites (i.e. wt)
-5. `lbled_both.csv`: each row contain labels for each probe in orientations o1, o2, and also a label taking into account labels in both orientations
-6. `ets_ets_m1m2m3wt.csv`: Median binding intensity for each sequence type
-7. `lbled_o1_selected.csv`: Median intensity from combinations of binding to individual and two sites in orientation o1
-8. `labeled_ets_ets_scatter.pdf`: scatter plot for cooperative vs. independent sequences
+2. `ETS1_ETS1_indiv.csv`: intensity for each combination of ETS1 binding to individual sites (i.e. m1+m2)
+3. `ETS1_ETS1_two.csv`: intensity for each combination of ETS1 binding to two sites (i.e. wt)
+4. `labeled_ets_ets_scatter.pdf`: scatter plot for cooperative vs. independent sequences
 
 Example outputs, see: `data/analysis_files/ETS1-ETS1/labeled`
 
@@ -74,7 +70,8 @@ Note: `rf_param_grid` is currently hardcoded, please change the parameters direc
 
 Output files:
 1. `ETS1_ETS1_rfmodel.sav`: pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, and strength features
-2. `auc_all.png`: AUC curve with the model performance
+2. `auc_all.png`: AUC curve with the model performances
+3. `auc_all.log`: A text file with the mean accuracy, mean AUC, and confusion matrices for all the models tested.
 
 Example outputs, see: `data/analysis_files/ETS1-ETS1/model`
 
@@ -87,25 +84,44 @@ Code: `label_pr_ets_runx.py`
 
 Run: `python3 label_pr_ets_runx.py`
 
-Note: there are a lot of parameters for the script and currently they are still hardcoded, please check the header in `main`.
+Note: there are a lot of parameters for the script and currently they are still hardcoded, please check the header in `main`. To change between ETS1-RUNX1 and RUNX1-ETS1 please use the relevant commented part provided in the code.
 
-Output files:
-1. `seqlbled_ets1_runx1.tsv`: Sequences with labels, this file is used as the main input for the subsequent analysis
+Output files using ETS1 as the main TF and RUNX1 as the cooperator TF (i.e. ETS1-RUNX1):
+1. `ets1_runx1_seqlbled.tsv`: Sequences with labels, this file is used as the main input for the subsequent analysis.
+2. `ets1_runx1_main.csv`: Intensity for the chamber with the main TF alone.
+3. `ets1_runx1_main_cooperator.csv`: Intensity for the chamber with the main TF in the presence of the cooperator TF.
+4. `normalized_ets1_runx1.pdf`: scatter plot for cooperative vs. independent sequences using the normalized data.
+5. `both_ori_plt_ets1_runx1.csv`: Each column represents the value used to plot (4).
+6. `seq_er_intensity.csv`: Median binding intensity for the main TF alone; main + cooperator TFs both normalized and unnormalzied.
 
 ### 2. Generate training data ETS1-RUNX1 ###
+
+Description: Generate training data with all the features and labels for the sequences containing ETS1 and RUNX1 sites
 
 Code: `traingen_ets_runx.py`
 
 Run: `python3 traingen_ets_runx.py`
+
+Output files (for ETS1-RUNX1):
+1. `train_ets1_runx1.tsv`: Training data for ETS1-RUNX1
+2. Three figure files with the distributions for distance, orientation, and strength features
+
+Example outputs, see: `data/analysis_files/ETS1-RUNX1/training`
 
 ### 3. Generate Random Forest model ETS1-RUNX1 ###
 
 Code: `genmodel_ets_runx.py`
 
 Run:
-- ETS1-RUNX1: `python3 traingen_ets_runx.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv`
-- RUNX1-ETS1: `python3 traingen_ets_runx.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv`
+- ETS1-RUNX1: `python3 genmodel_ets_runx.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv`
+- RUNX1-ETS1: `python3 genmodel_ets_runx.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv`
 
+Output files:
+1. `ETS1_RUNX1_rfmodel.sav`: pickle file with the random forest model trained on ETS1-RUNX1 data using distance, orientation, and strength features
+2. `auc.png`: AUC curve with the model performances
+3. `auc.log`: A text file with the mean accuracy, mean AUC, and confusion matrices for all the models tested.
+
+Example outputs, see: `data/analysis_files/ETS1-RUNX1/model`
 
 ## Shape analysis for ETS1-ETS1 or ETS1-RUNX1
 
@@ -117,11 +133,13 @@ Code: `gen_posmdl.py`
 
 Run:
 - ETS1-ETS1: `python3 gen_posmdl.py data/analysis_files/ETS1_ETS1/training/train_ETS1_ETS1.tsv -a site_str -b site_wk -s relative -r -o`
-- ETS1-RUNX1: `python3 gen_posmdl.py data/analysis_files/ETS1_RUNX1/training/train_ETS1_ETS1.tsv -a ETS1 -b RUNX1 -s positional`
+- ETS1-RUNX1: `python3 gen_posmdl.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv -a ets1 -b runx1 -s positional`
+- RUNX1-ETS1:`python3 gen_posmdl.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv -a runx1 -b ets1 -s positional`
 
 Output files:
-1. A pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, shape, and sequence features
-2. A figure with the ROC curve showing the model performance
+1. `rfposmodel.sav`: A pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, shape, and sequence features
+2. `auc_posfeatures.pdf`: A figure with the ROC curve showing the model performances
+3. `auc_all.log`: A text file with the mean accuracy, mean AUC, and confusion matrices for all the models tested.
 
 ### 2. Shape analysis for ETS1-ETS1 ###
 
@@ -131,7 +149,8 @@ Code: `shape_analysis.py`
 
 Run:
 - ETS1-ETS1: `python3 shape_analysis.py data/analysis_files/ETS1_ETS1/training/train_ETS1_ETS1.tsv -p site_str_pos,site_wk_pos`
-- ETS1-RUNX1: `python3 shape_analysis.py data/analysis_files/ETS1_RUNX1/training/train_ETS1_RUNX1.tsv -p ETS1_pos,RUNX1_pos`
+- ETS1-RUNX1: `python3 shape_analysis.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv -p ets1_pos,runx1_pos`
+- RUNX1-ETS1: `python3 shape_analysis.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv -p runx1_pos,ets1_pos`
 
 Example outputs, see:
 - ETS1-ETS1: `data/analysis_files/ETS1_ETS1/shape_out`

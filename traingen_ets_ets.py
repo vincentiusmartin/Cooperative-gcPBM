@@ -76,11 +76,9 @@ if __name__ == "__main__":
     pwm_ets = PWM(args.pwmpath, log=True)
     kompas_ets = Kompas(args.kmeralign,
                     core_start = 11, core_end = 15, core_center = 12)
+                    
     df = pd.read_csv(args.path).drop_duplicates()
-
-
     df = df[(df["label"] == "cooperative") | (df["label"] == "independent")]
-    print(df[["label"]].value_counts())
     train = gen_training(df, pwm_ets, kompas_ets).drop_duplicates(["Sequence"])
 
     print(train["label"].value_counts())
