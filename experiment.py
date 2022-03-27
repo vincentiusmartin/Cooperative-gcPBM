@@ -28,9 +28,9 @@ architecture_maps = {
         "model": TwoLayerCNN,
         "params": ("kernel_size", "kernel2_size"),
         "grid": {
-            "conv_filters": [256, 512, 1024, 2048, 4096],
-            "conv2_filters": [256, 512, 1024, 2048, 4096],
-            "fc_layer_nodes": [256, 512, 1024, 2048],
+            "conv_filters": [512],  # [256, 512, 1024, 2048, 4096],
+            "conv2_filters": [512],  # [256, 512, 1024, 2048, 4096],
+            "fc_layer_nodes": [1024],  # [256, 512, 1024, 2048],
         },
     },
     "multi_input_one_layer_cnn": {
@@ -132,7 +132,7 @@ def plot_train_validate_accuracy(train_series, validate_series):
 
 
 def process_experiment_architecture_model(job_id, output_path, data_path, experiment_name,
-                                          architecture_name, mers, *params):
+                                          architecture_name, mers, batch_size, *params):
     architecture = architecture_maps[architecture_name]
 
     # validate the params and move to a dictionary or variables
@@ -149,13 +149,15 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
     # give me all possible combinations of the grid ranges
     grid = list(itertools.product(*grid_ranges.values()))
 
-    batch_size = 64
-    epochs = 50
-
     random_state = 1239283591
     cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
                                                           random_state=random_state,
                                                           mers=mers)
+
+    epochs = len(cross_validation_splits[0][0]) // batch_size * 4
+
+    if epochs > 300:
+        epochs = 300
 
     cv_means = []
     for grid_params in grid:
@@ -163,7 +165,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
         cv_max_validate_acc = []
         for j, (train_data, validate_data) in enumerate(cross_validation_splits):
-            torch.manual_seed(random_state)
+            # torch.manual_seed(random_state)
 
             net = NeuralNetwork(*grid_params, mers=mers, **params).to(device)
             train_dataloader = DataLoader(train_data, batch_size=batch_size)
@@ -202,7 +204,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
         cv_max_validate_acc = []
         for j, (train_data, validate_data) in enumerate(cross_validation_splits):
-            torch.manual_seed(random_state)
+            # torch.manual_seed(random_state)
 
             net = NeuralNetwork(*best_grid_params, mers=mers, **params).to(device)
             train_dataloader = DataLoader(train_data, batch_size=batch_size)
@@ -230,6 +232,8 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
             "architecture": architecture_name,
             "experiment": experiment_name,
             "mers": mers,
+            "batch_size": batch_size,
+            "epochs": epochs,
             "cross_validation_test_r2": cv_max_validate_acc,
             "cv_test_r2_mean": mean,
             "cv_test_r2_mean_std": statistics.stdev(cv_max_validate_acc, mean)
@@ -263,8 +267,9 @@ if __name__ == "__main__":
     experiment = sys.argv[4]  # "ets1_ets1"
     architecture = sys.argv[5]  # "one_layer_cnn"
     mers = int(sys.argv[6])
-    arch_params = sys.argv[7:]
+    batch_size = int(sys.argv[7])
+    arch_params = sys.argv[8:]
 
     print(f"experiment: {experiment}, architecture: {architecture}, job_id:{job_id}")
     process_experiment_architecture_model(job_id, output_path, data_path, experiment, architecture,
-                                          mers, *arch_params)
+                                          mers, batch_size, *arch_params)
