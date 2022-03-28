@@ -28,9 +28,9 @@ architecture_maps = {
         "model": TwoLayerCNN,
         "params": ("kernel_size", "kernel2_size"),
         "grid": {
-            "conv_filters": [512],  # [256, 512, 1024, 2048, 4096],
-            "conv2_filters": [512],  # [256, 512, 1024, 2048, 4096],
-            "fc_layer_nodes": [1024],  # [256, 512, 1024, 2048],
+            "conv_filters": [2048],  # [256, 512, 1024, 2048, 4096],
+            "conv2_filters": [256],  # [256, 512, 1024, 2048, 4096],
+            "fc_layer_nodes": [128],  # [256, 512, 1024, 2048],
         },
     },
     "multi_input_one_layer_cnn": {
@@ -154,11 +154,8 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
                                                           random_state=random_state,
                                                           mers=mers)
 
-    epochs = len(cross_validation_splits[0][0]) // batch_size * 4
-
-    if epochs > 300:
-        epochs = 300
-
+    epochs = 60
+    
     cv_means = []
     for grid_params in grid:
         # Maybe use skorch for some part of this?
