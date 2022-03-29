@@ -23,7 +23,7 @@ experiments=( "ets1_ets1" )  # ( "ets1_runx1" )
 
 kernel_sizes=(8) #kernel_sizes=(4 8 12 16)  # 4
 
-kernel2_sizes=(12)  # (4 8 12 16) # 4
+kernel2_sizes=(4)  # (4 8 12 16) # 4
 
 kernel3_sizes=(4 8 12 16) # 4
 
