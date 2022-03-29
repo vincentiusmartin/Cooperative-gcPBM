@@ -1,7 +1,7 @@
 # Cooperative-gcPBM
 The pipeline for analyzing cooperative genomic context protein binding microarray (cooperative gcPBM) data.
 
-All input and processed files, including figures, are available in: https://www.dropbox.com/sh/x136g6plm2i6i7q/AAA-KAGtxAMu1hpV50dFi8ZEa?dl=0
+All input and processed files, including figures, are available in: https://duke.box.com/s/cnbo6gjg223mtdun3cnemycwep414wgd
 
 ## Generate clean probe files
 Code: `clean_file.py`
