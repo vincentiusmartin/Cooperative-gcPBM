@@ -19,7 +19,7 @@ data_path="/usr/xtmp/kpinheiro/data"
 architectures=( "two_layer_cnn" )  # 1
 # "multi_input_one_layer_cnn" "multi_input_two_layer_cnn") #"one_layer_cnn" "two_layer_cnn")  # 2
 
-experiments=( "ets1_ets1" )  # ( "ets1_runx1" )
+experiments=( "ets1_runx1" )  # ( "ets1_runx1" )
 
 kernel_sizes=(8) #kernel_sizes=(4 8 12 16)  # 4
 
