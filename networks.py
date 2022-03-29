@@ -56,10 +56,10 @@ class TwoLayerCNN(nn.Module):
             nn.Linear((padded_length - kernel_size + 1 - kernel2_size + 1)*conv2_filters,
                       fc_node_count),
             nn.ReLU(),
-            nn.Dropout(.25),
+            nn.Dropout(.75),
             nn.Linear(fc_node_count, 128),
             nn.ReLU(),
-            nn.Dropout(.25),
+            nn.Dropout(.75),
             nn.Linear(128, 1),
         )
 
