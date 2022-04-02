@@ -6,7 +6,7 @@
 
 # 2 * 4 * 4 * 4 * 2 = 256
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=0-7%8
+#SBATCH --array=8-127%20
 #SBATCH --mail-type=END
 #SBATCH --output=dl.out
 
@@ -16,20 +16,20 @@ mkdir -p "$outdir"
 
 data_path="/usr/xtmp/kpinheiro/data"
 
-architectures=( "two_layer_cnn" )  # 1
+architectures=( "three_layer_cnn" )  # 1
 # "multi_input_one_layer_cnn" "multi_input_two_layer_cnn") #"one_layer_cnn" "two_layer_cnn")  # 2
 
-experiments=( "ets1_runx1" )  # ( "ets1_runx1" )
+experiments=( "ets1_runx1" "ets1_ets1" )  # ( "ets1_runx1" )
 
-kernel_sizes=(8) #kernel_sizes=(4 8 12 16)  # 4
+kernel_sizes=(4 8 12 16)  # 4
 
-kernel2_sizes=(4)  # (4 8 12 16) # 4
+kernel2_sizes=(4 8 12 16) # 4
 
 kernel3_sizes=(4 8 12 16) # 4
 
 mers=(3)  # 2
 
-batch_sizes=(1 2 4 8 16 32 64 128)
+batch_sizes=(32)
 
 # for loop over models, feature sets, and models
 args=()

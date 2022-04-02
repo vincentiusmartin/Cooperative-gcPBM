@@ -11,7 +11,8 @@ from torch.nn import MSELoss
 from torch.utils.data import DataLoader
 
 from datasets import get_cross_validate_datasets
-from networks import CNN, MultiInputCNN, TwoLayerCNN, TwoLayerMultiInputCNN
+from networks import CNN, MultiInputCNN, TwoLayerCNN, TwoLayerMultiInputCNN, ThreeLayerCNN
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -51,12 +52,12 @@ architecture_maps = {
         },
     },
     "three_layer_cnn": {
-        "model": TwoLayerCNN,
+        "model": ThreeLayerCNN,
         "params": ("kernel_size", "kernel2_size", "kernel3_size"),
         "grid": {
-            "conv_filters": [256, 512, 1024, 2048],
-            "conv2_filters": [256, 512, 1024, 2048],
-            "conv3_filters": [256, 512, 1024, 2048],
+            "conv_filters": [256, 512, 1024],
+            "conv2_filters": [256, 512, 1024],
+            "conv3_filters": [256, 512, 1024],
             "fc_layer_nodes": [256, 512, 1024],
         },
     },
