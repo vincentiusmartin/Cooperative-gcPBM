@@ -11,9 +11,11 @@ from torch.utils.data import Dataset
 
 
 class SequenceDataset(Dataset):
-    def __init__(self, seqs, deltas, ids):
-        self.sequences = seqs[ids]
-        self.deltas = deltas[ids]
+    def __init__(self, seqs, deltas, ids, *extra_features):
+        self.sequences = seqs
+        self.deltas = deltas
+        self.extra_features = extra_features
+        self.ids = ids
 
     def __len__(self):
         return len(self.sequences)
@@ -22,10 +24,23 @@ class SequenceDataset(Dataset):
         sequence = self.sequences[idx].float()
         sequence = torch.transpose(sequence, 0, 1)
 
-        return sequence, self.deltas[idx].float()
+        extra_features = []
+        for feature in self.extra_features:
+            val = torch.tensor(feature[idx]).float()
+
+            if val.dim() == 0:
+                val = val.unsqueeze(0)
+
+            # print(f"shape: {val.dim()}")
+            extra_features.append(val)
+            # print(f"seq_shape: {sequence.dim()}")
+        deltas = torch.tensor(self.deltas[idx]).float()
+
+        return sequence, deltas, *extra_features
 
 
-def get_cross_validate_datasets(experiment_name, data_path, random_state, mers=1):
+def get_cross_validate_datasets(experiment_name, data_path, random_state, extra_features, mers=1,
+                                return_dft=False):
     experiment_dict = {
         "ets1_ets1":
             {
@@ -44,7 +59,8 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, mers=1
     df_delta = pd.read_csv(experiment["labeled_data_path"])
     dft = pd.read_csv(experiment["training_data_path"], sep="\t")
 
-    df_delta["delta"] = np.log(df_delta["two_median"]) - np.log(df_delta["indiv_median"])
+    # df_delta["delta"] = np.log(df_delta["two_median"]) - np.log(df_delta["indiv_median"])
+    df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
 
     dft = dft.merge(df_delta, on="Name")
 
@@ -81,20 +97,67 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, mers=1
     sequences = functional.one_hot(sequences)  # convert to one-hot encoding
 
     # Obtain target vector
-    deltas = dft["delta"]
+    deltas = np.array(dft["delta"])
+    deltas = torch.from_numpy(deltas)
     deltas = np.expand_dims(deltas, axis=1)
 
-    # scaling needs to be moved to where it can be done on trained data
-    scaler = StandardScaler().fit(deltas)  # need to only apply this to the input
-    deltas = scaler.transform(deltas)
-    deltas = np.squeeze(deltas, axis=1)
-    deltas = torch.from_numpy(deltas)
+    extra_features_data = []
+
+    if extra_features:
+        if experiment_name == "ets1_ets1":
+            if "site1_score" in extra_features:
+                site1_scores = np.array(dft["site_wk_score"])
+                extra_features_data.append(site1_scores)
+
+            if "site2_score" in extra_features:
+                site2_scores = np.array(dft["site_str_score"])
+                extra_features_data.append(site2_scores)
+        else:
+            if "site1_score" in extra_features:
+                site1_scores = np.array(dft["ets1_score"])
+                extra_features_data.append(site1_scores)
+            if "site2_score" in extra_features:
+                site2_scores = np.array(dft["runx1_score"])
+                extra_features_data.append(site2_scores)
+            # runx1_scores = torch.from_numpy(runx1_scores)
+
+        if "orientation" in extra_features:
+            ori_encoding = {"+/+": 0, "+/-": 1, "-/+": 2, "-/-": 3}
+
+            def encode_orientation(val):
+                return ori_encoding[val]
+
+            ori = np.array(dft["orientation"])
+            vec_make_categorical = np.vectorize(encode_orientation)
+            ori = vec_make_categorical(ori)
+            ori = functional.one_hot(torch.from_numpy(ori), num_classes=4)
+            extra_features_data.append(ori)
+        # distances = np.array(dft["distance"])
 
     # https://github.com/christianversloot/machine-learning-articles/blob/main/how-to-use-k-fold-cross-validation-with-pytorch.md
     k_fold = KFold(n_splits=5, shuffle=True, random_state=random_state)
     cross_validation_split_ids = k_fold.split(sequences)
 
-    return [
-        (SequenceDataset(sequences, deltas, train_ids),
-         SequenceDataset(sequences, deltas, validate_ids))
-        for train_ids, validate_ids in cross_validation_split_ids]
+    test_train_sets = []
+
+    for train_ids, validate_ids in cross_validation_split_ids:
+        scaler = StandardScaler().fit(deltas[train_ids])
+        deltas_temp = scaler.transform(deltas)
+        deltas_temp = np.squeeze(deltas_temp, axis=1)
+
+        extra_features_train_sets = ([feature[train_ids] for feature in extra_features_data]
+                                     if extra_features is not None else ())
+        extra_features_validate_sets = ([feature[validate_ids] for feature in extra_features_data]
+                                        if extra_features is not None else ())
+        test_train_sets.append((
+            SequenceDataset(sequences[train_ids], deltas_temp[train_ids], train_ids,
+                            *extra_features_train_sets),
+            SequenceDataset(sequences[validate_ids], deltas_temp[validate_ids], validate_ids,
+                            *extra_features_validate_sets)
+        ))
+
+        if return_dft:
+            test_train_sets[-1] = (*test_train_sets[-1], dft)
+
+    # standardization needs to happen here. Also need a mechanism to turn it on and off.
+    return test_train_sets

@@ -2,11 +2,10 @@
 #
 #
 # TO RUN:
-# sbatch -p compsci-gpu --gres=gpu:1 train_and_evaluate.sh
+# sbatch -p compsci-gpu --gres=gpu:2 train_and_evaluate.sh
 
-# 2 * 4 * 4 * 4 * 2 = 256
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=8-127%20
+#SBATCH --array=0-161%30
 #SBATCH --mail-type=END
 #SBATCH --output=dl.out
 
@@ -19,15 +18,16 @@ data_path="/usr/xtmp/kpinheiro/data"
 architectures=( "three_layer_cnn" )  # 1
 # "multi_input_one_layer_cnn" "multi_input_two_layer_cnn") #"one_layer_cnn" "two_layer_cnn")  # 2
 
-experiments=( "ets1_runx1" "ets1_ets1" )  # ( "ets1_runx1" )
+experiments=( "ets1_runx1" "ets1_ets1" )
 
-kernel_sizes=(4 8 12 16)  # 4
+kernel_sizes=(4 8 12)  # 4
 
-kernel2_sizes=(4 8 12 16) # 4
+kernel2_sizes=(8 12 16) # 4
 
-kernel3_sizes=(4 8 12 16) # 4
+kernel3_sizes=(4 8 12) # 4
 
-mers=(3)  # 2
+
+mers=(1 2 3)  # 2
 
 batch_sizes=(32)
 
@@ -38,16 +38,23 @@ for experiment in "${experiments[@]}"; do
     for mer in "${mers[@]}"; do
       for batch_size in "${batch_sizes[@]}"; do
         for kernel_size in "${kernel_sizes[@]}"; do
-          if [ "${architecture}" = "two_layer_cnn" ] || [ "${architecture}" = "multi_input_two_layer_cnn" ] || [ "${architecture}" = "three_layer_cnn" ]
+          if [ "${architecture}" = "two_layer_cnn" ] || [ "${architecture}" = "multi_input_two_layer_cnn" ] || [ "${architecture}" = "three_layer_cnn" ] || [ "${architecture}" = "four_layer_cnn" ]
           then
             for kernel2_size in "${kernel2_sizes[@]}"; do
-              if [ "${architecture}" = "three_layer_cnn" ]
+              if [ "${architecture}" = "three_layer_cnn" ] || [ "${architecture}" = "four_layer_cnn" ]
               then
                 for kernel3_size in "${kernel3_sizes[@]}"; do
-                  args+=("${experiment} ${architecture} ${mer} ${batch_size} ${kernel_size} ${kernel2_size} ${kernel3_size}")
+                  if [ "${architecture}" = "four_layer_cnn" ]
+                  then
+                    for kernel4_size in "${kernel4_sizes[@]}"; do
+                      args+=("${experiment} ${architecture} ${mer} ${batch_size} ${kernel_size},${kernel2_size},${kernel3_size},${kernel4_size}")
+                    done
+                  else
+                    args+=("${experiment} ${architecture} ${mer} ${batch_size} ${kernel_size},${kernel2_size},${kernel3_size}")
+                  fi
                 done
               else
-              args+=("${experiment} ${architecture} ${mer} ${batch_size} ${kernel_size} ${kernel2_size}")
+              args+=("${experiment} ${architecture} ${mer} ${batch_size} ${kernel_size},${kernel2_size}")
               fi
             done
           else
@@ -61,6 +68,8 @@ done
 
 #echo ${#args[@]}
 
+extra_features=""
+#extra_features="site1_score,site2_score"
 # Use correct paths to appropriate python installation and python file
 srun /home/users/kap52/miniconda3/envs/dl_cooperativity/bin/python /home/users/kap52/dl_cooperativity/experiment.py \
-"${SLURM_ARRAY_TASK_ID}" "${outdir}" "${data_path}" ${args[${SLURM_ARRAY_TASK_ID}]}
+"${SLURM_ARRAY_TASK_ID}" "${outdir}" "${data_path}" ${args[${SLURM_ARRAY_TASK_ID}]} "${extra_features}"
