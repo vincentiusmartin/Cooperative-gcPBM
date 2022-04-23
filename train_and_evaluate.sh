@@ -5,7 +5,7 @@
 # sbatch -p compsci-gpu --gres=gpu:2 train_and_evaluate.sh
 
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=0-1024%40
+#SBATCH --array=0-1024%50
 #SBATCH --mail-type=END
 #SBATCH --output=dl.out
 
@@ -15,7 +15,7 @@ mkdir -p "$outdir"
 
 data_path="/usr/xtmp/kpinheiro/data"
 
-architectures=( "four_layer_cnn")  # 1
+architectures=( "three_layer_cnn")  # 1
 
 experiments=( "ets1_runx1" "ets1_ets1" ) # 2
 
@@ -69,7 +69,7 @@ done
 #echo ${#args[@]}
 
 #extra_features=""
-extra_features="site1_score,site2_score"
+extra_features="site1_score,site2_score,orientation"
 # Use correct paths to appropriate python installation and python file
 srun /home/users/kap52/miniconda3/envs/dl_cooperativity/bin/python /home/users/kap52/dl_cooperativity/experiment.py \
 "${SLURM_ARRAY_TASK_ID}" "${outdir}" "${data_path}" ${args[${SLURM_ARRAY_TASK_ID}]} "${extra_features}"

@@ -41,11 +41,11 @@ architecture_maps = {
         "model": NLayerCNN,
         "params": ("kernel_size", 3),
         "grid": {
-            "conv_filters": [[256, 512],  # layer 1
-                             [256, 512, 1024],  # layer 2
-                             [256, 512],  # layer 3
+            "conv_filters": [[256],  # layer 1
+                             [256],  # layer 2
+                             [256],  # layer 3
                              ],
-            "fc_layer_nodes": [256, 512],
+            "fc_layer_nodes": [512],
         },
     },
     "two_layer_cnn": {
