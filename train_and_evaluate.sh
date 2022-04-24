@@ -5,7 +5,7 @@
 # sbatch -p compsci-gpu --gres=gpu:2 train_and_evaluate.sh
 
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=0-287%50
+#SBATCH --array=0-3%50
 #SBATCH --mail-type=END
 #SBATCH --output=dl.out
 
@@ -15,15 +15,15 @@ mkdir -p "$outdir"
 
 data_path="/usr/xtmp/kpinheiro/data"
 
-architectures=( "one_layer_cnn" "two_layer_cnn" )  # 2
+architectures=( "three_layer_cnn" )  # 2
 
 experiments=( "ets1_runx1" "ets1_ets1" ) # 2
 
-kernel_sizes=(4 8 12 16 20 24)  # 6
+kernel_sizes=(4)  # 6
 
-kernel2_sizes=(4 8 12 16 20 24) # 6
+kernel2_sizes=(8) # 6
 
-kernel3_sizes=(4 8 12 16) # 4
+kernel3_sizes=(12) # 4
 
 kernel4_sizes=(4 8 12 16) # 4
 

@@ -60,7 +60,7 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, extra_
     dft = pd.read_csv(experiment["training_data_path"], sep="\t")
 
     # df_delta["delta"] = np.log(df_delta["two_median"]) - np.log(df_delta["indiv_median"])
-    df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
+    df_delta["delta"] = df_delta["two_median"] / df_delta["indiv_median"]
 
     dft = dft.merge(df_delta, on="Name")
 
