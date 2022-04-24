@@ -141,9 +141,10 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, extra_
     test_train_sets = []
 
     for train_ids, validate_ids in cross_validation_split_ids:
-        scaler = StandardScaler().fit(deltas[train_ids])
-        deltas_temp = scaler.transform(deltas)
-        deltas_temp = np.squeeze(deltas_temp, axis=1)
+        # scaler = StandardScaler().fit(deltas[train_ids])
+        # deltas_temp = scaler.transform(deltas)
+        # deltas_temp = np.squeeze(deltas_temp, axis=1)
+        deltas_temp = np.squeeze(deltas, axis=1)
 
         extra_features_train_sets = ([feature[train_ids] for feature in extra_features_data]
                                      if extra_features is not None else ())
