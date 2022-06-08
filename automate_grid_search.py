@@ -9,8 +9,10 @@ import sys
 
 import numpy as np
 import pandas as pd
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_validate, GridSearchCV
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
@@ -24,21 +26,20 @@ models = {
         "param_grid": {
             "n_estimators": [32, 64, 128, 256],
             "max_features": ["sqrt", None],
-            "max_depth": [2, 4, 8, 16, 32, 64, 128],
-            "min_samples_leaf": [2, 4, 8],
+            "max_depth": [4, 8, 16, 32, 64, 128],
+            "min_samples_leaf": [1, 2, 4, 8],
             "min_samples_split": [2, 4, 8],
-            "min_impurity_decrease": [0, .2, .4, .6, .8, 1],
+            "min_impurity_decrease": [0, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.2],
         }
     },
     "support_vector_regression": {
         "class": SVR,
         "param_grid": [
             {
-                "C": [.25, .5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384,
-                      32768, 65536],
-                "gamma": [.000001, .00001, .0001, .001, .01, .1, 1, 2, 10, 100],
-                "kernel": ["rbf"],
-                "epsilon": [.125, .25, .5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024],
+                "regressor__regressor__C": [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64],
+                "regressor__regressor__gamma": [.000001, .00001, .0001, .001, .01, .1, 1, 10],
+                "regressor__regressor__kernel": ["rbf"],
+                "regressor__regressor__epsilon": [0.015625, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2]
             },
         ],
     },
@@ -98,7 +99,6 @@ def get_features(df, keys, exp):
 
     X = ct.get_feature_all(feature_dict)
     X = X.values.tolist()
-    X = StandardScaler().fit_transform(X)
     ytrue = np.array(ct.df["delta"].values.tolist())
 
     return X, ytrue
@@ -114,9 +114,9 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
 
     dft = dft.merge(dfdelta, on="Name")
 
-    # These two lines enable/disable filtering on "cooperative" classification
-    #  dft = dft[dft["label"] == "cooperative"]
-    #  dft = dft.reset_index()
+    if experiment_name == "ets1_ets1":
+        dft = dft[dft["label"] == "cooperative"]
+        dft = dft.reset_index()
 
     model_grid = models[model]
     # print(f"model: {model}, experiment: {experiment_name} feature_set: {feature_set}")
@@ -124,13 +124,14 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
     X, ytrue = get_features(dft, feature_set, experiment)
     X, ytrue = shuffle(X, ytrue, random_state=1239283591)
 
-    param = {}
-
     if model_grid["class"].__name__ == "RandomForestRegressor":
-        param["random_state"] = 1239283591
+        regressor = model_grid["class"](random_state=1239283591)
+    else:
+        pipeline = Pipeline([("scaler", StandardScaler()), ("regressor", model_grid["class"]())])
+        regressor = TransformedTargetRegressor(regressor=pipeline, transformer=StandardScaler())
 
-    grid_search = GridSearchCV(model_grid["class"](**param), model_grid["param_grid"], cv=5,
-                               refit=True, n_jobs=-1, verbose=2)
+    grid_search = GridSearchCV(regressor, model_grid["param_grid"], cv=5,
+                               refit=True, n_jobs=-1, verbose=1)
     grid_search.fit(X, ytrue)
 
     params = grid_search.best_params_
@@ -139,14 +140,21 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
         f.write(json.dumps([]))
 
     # do 5 cross-validations so we can aggregate data across more than one replication of
-    # cross-validation (5 randomly-generated integers for random seeds)
+    # cross-validation (random seeds were randomly-generated)
     for rand_state in (3454832692, 3917820095, 851603617, 432544541, 4162995973):
         X, ytrue = shuffle(X, ytrue, random_state=rand_state)
 
         if model_grid["class"].__name__ == "RandomForestRegressor":
-            params["random_state"] = rand_state
+            regressor = model_grid["class"](random_state=rand_state, **params)
+        else:
+            new_params = {key.replace("regressor__regressor__", ""): value
+                          for key, value in params.items()}
+            pipeline = Pipeline(
+                [("scaler", StandardScaler()), ("regressor", model_grid["class"](**new_params))])
+            regressor = TransformedTargetRegressor(regressor=pipeline, transformer=StandardScaler())
 
-        cv_results = cross_validate(model_grid["class"](**params), X, ytrue, cv=5, scoring="r2")
+        cv_results = cross_validate(regressor, X, ytrue, cv=5, scoring="r2", n_jobs=-1,
+                                    return_train_score=True)
 
         new_result = {
             "model": model,
@@ -159,6 +167,7 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
             ],
             "cross_validation_test_r2": list(cv_results["test_score"]),
             "cv_test_r2_mean": cv_results["test_score"].mean(),
+            "cv_train_r2_mean": cv_results["train_score"].mean(),
         }
 
         with open(file_path, "r+") as f:
