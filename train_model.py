@@ -1,8 +1,5 @@
-import itertools
 import json
 import os
-import statistics
-import sys
 
 import matplotlib.pyplot as plt
 from sklearn import metrics
@@ -11,29 +8,22 @@ from torch.nn import MSELoss
 from torch.utils.data import DataLoader
 
 from datasets import get_cross_validate_datasets
-from networks import MultiInputCNN, NLayerCNN
+from networks import NLayerCNN
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 architecture_maps = {
-    "multi_input_one_layer_cnn": {
-        "model": MultiInputCNN,
-        "params": ("kernel_size",),
-        "grid": {
-            "conv_filters": [16, 32, 64, 128, 256],
-            "fc_layer_nodes": [128, 256, 512],
-        },
-    },
-    "three_layer_cnn": {
+    "four_layer_cnn": {
         "model": NLayerCNN,
-        "params": ("kernel_size", 3),
+        "params": ("kernel_size", 4),
         "grid": {
-            "conv_filters": [[256, 512],  # layer 1
-                             [256, 512, 1024],  # layer 2
-                             [256, 512],  # layer 3
+            "conv_filters": [[256],
+                             [256],
+                             [256],
+                             [256],
                              ],
-            "fc_layer_nodes": [256, 512],
+            "fc_layer_nodes": [512],
         },
     },
 }
@@ -98,7 +88,6 @@ def plot_train_validate_accuracy(train_series, validate_series, file_name=None):
 def process_experiment_architecture_model(job_id, output_path, data_path, experiment_name,
                                           architecture_name, mers, batch_size, kernel_sizes,
                                           extra_features):
-
     extra_feature_count = 0
 
     if extra_features is not None:
@@ -109,18 +98,12 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
     architecture = architecture_maps[architecture_name]
 
-    # validate the params and move to a dictionary or variables
-    # if len(architecture["params"]) != len(params):
-    #     raise AttributeError(f"architecture: {architecture_name} requires "
-    #                          f"{len(architecture['params'])} parameters:"
-    #                          f"\n {architecture['params']}")
-
     _, num_kernels = architecture["params"]
 
     NeuralNetwork = architecture["model"]
 
-    max_epochs = 120
-    patience = 20
+    max_epochs = 250
+    patience = 250
 
     file_path = os.path.join(output_path, f"task_{job_id}.json")
 
@@ -134,12 +117,11 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
                                                           extra_features=extra_features,
                                                           mers=mers)
     j, (train_data, validate_data) = next(enumerate(cross_validation_splits))
-    # torch.manual_seed(random_state)
 
     net = NeuralNetwork(CONV_FILTERS, FC_LAYER_COUNT, mers=mers, kernel_sizes=kernel_sizes,
-                        extra_feature_count=extra_feature_count).to(device)
-    train_dataloader = DataLoader(train_data, batch_size=batch_size)
-    validate_dataloader = DataLoader(validate_data, batch_size=batch_size)
+                        extra_feature_count=extra_feature_count, pool="max").to(device)
+    train_dataloader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
+    validate_dataloader = DataLoader(validate_data, shuffle=True, batch_size=batch_size)
 
     optimizer = torch.optim.Adam(net.parameters())
     loss_fn = MSELoss()
@@ -159,12 +141,13 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
         if validate_r2 > best:
             best, best_epoch = validate_r2, t
+
+            torch.save(net.state_dict(), os.path.join(output_path, f"task_{job_id}.pt"))
         elif t > patience + best_epoch:
             break
 
     plot_train_validate_accuracy(train_acc, validate_acc,
-                                 os.path.join(output_path, f"{job_id}.pdf"))
-    torch.save(net.state_dict(), os.path.join(output_path, f"{job_id}.pt"))
+                                 os.path.join(output_path, f"task_{job_id}.pdf"))
 
     new_result = {
         "architecture": architecture_name,
@@ -173,6 +156,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
         "batch_size": batch_size,
         "epochs": best_epoch,
         "cv_test": validate_r2,
+        "best_cv_test": best,
         "patience": patience,
         "extra_features": extra_features,
     }
@@ -194,39 +178,19 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
 
 if __name__ == "__main__":
-    # process_experiment_architecture_model(experiment, architecture, "/null")
-    # argument format:
-    # <job_id> <output_path> <data_path> <ets1_ets1|ets1_runx1> <architecture>
-    # <mers> <kernel_size> <num_conv_filters>
-
-    g = {
-        "file_path": "/home/users/kap52/id_1772537/task_35.json",
-         "architecture": "three_layer_cnn",
-         "experiment":
-             "ets1_runx1",
-         "mers": 2,
-         "batch_size": 32,
-         "epochs": 27.55390334572491,
-         "cross_validation_test_r2":
-             [0.7119611683611579, 0.7821546565893076, 0.7177128203208587, 0.7015456955716148,
-              0.7711541149003712],
-         "cv_test_r2_mean_std": 0.03695046751342678,
-         "patience": 20,
+    # manually adjust this dictionary to reflect the model to be trained
+    g = {"architecture": "four_layer_cnn", "experiment": "ets1_runx1", "mers": 2, "batch_size": 32,
          "extra_features": ["site1_score", "site2_score"],
-         "kernel_sizes": [4, 16, 12],
-         "conv_filters": [256, 1024, 256],
-         "fc_layer_nodes": 512,
-         "cv_r2_means": [0.736905691148662, 0.7180371459747678, 0.7334719498252138,
-                         0.7198727511668079,
-                         0.733900843016718],
-         "cv_r2_mean": 0.7284376762264339}
+         "kernel_sizes": [4, 6, 3, 5], "conv_filters": [256, 256, 256, 256], "fc_layer_nodes": 512,
+         "file_path": "four_layer_best",
+         }
 
-    job_id = g["file_path"].split("/")[-1].split(".")[-1]
+    job_id = g["file_path"]
 
-    output_path = os.getcwd()
-    data_path = "/usr/xtmp/kpinheiro/data"  # "/Users/kylepinheiro/research_code"
-    experiment = g["experiment"]  # "ets1_ets1"
-    architecture = g["architecture"]  # "one_layer_cnn"
+    output_path = os.getcwd()  # or replace with path to output
+    data_path = "<insert path here>"
+    experiment = g["experiment"]
+    architecture = g["architecture"]
     mers = g["mers"]
     batch_size = g["batch_size"]
     kernel_sizes = g["kernel_sizes"]
@@ -235,10 +199,7 @@ if __name__ == "__main__":
     kernel_sizes = [int(k) for k in kernel_sizes]
 
     CONV_FILTERS = g["conv_filters"]
-
     FC_LAYER_COUNT = g["fc_layer_nodes"]
-
-    BEST_EPOCH = int(g["epochs"])
 
     print(f"experiment: {experiment}, architecture: {architecture}, job_id:{job_id}")
     process_experiment_architecture_model(job_id, output_path, data_path, experiment, architecture,

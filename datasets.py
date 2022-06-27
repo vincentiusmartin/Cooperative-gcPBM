@@ -59,8 +59,7 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, extra_
     df_delta = pd.read_csv(experiment["labeled_data_path"])
     dft = pd.read_csv(experiment["training_data_path"], sep="\t")
 
-    # df_delta["delta"] = np.log(df_delta["two_median"]) - np.log(df_delta["indiv_median"])
-    df_delta["delta"] = df_delta["two_median"] / df_delta["indiv_median"]
+    df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
 
     dft = dft.merge(df_delta, on="Name")
 
@@ -132,9 +131,7 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, extra_
             ori = vec_make_categorical(ori)
             ori = functional.one_hot(torch.from_numpy(ori), num_classes=4)
             extra_features_data.append(ori)
-        # distances = np.array(dft["distance"])
 
-    # https://github.com/christianversloot/machine-learning-articles/blob/main/how-to-use-k-fold-cross-validation-with-pytorch.md
     k_fold = KFold(n_splits=5, shuffle=True, random_state=random_state)
     cross_validation_split_ids = k_fold.split(sequences)
 
