@@ -13,21 +13,6 @@ from networks import NLayerCNN
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-architecture_maps = {
-    "four_layer_cnn": {
-        "model": NLayerCNN,
-        "params": ("kernel_size", 4),
-        "grid": {
-            "conv_filters": [[256],
-                             [256],
-                             [256],
-                             [256],
-                             ],
-            "fc_layer_nodes": [512],
-        },
-    },
-}
-
 
 def train(optimizer, loss_fn, model, dataloader):
     model.train()
@@ -96,12 +81,6 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
         if "orientation" in extra_features:
             extra_feature_count += 3
 
-    architecture = architecture_maps[architecture_name]
-
-    _, num_kernels = architecture["params"]
-
-    NeuralNetwork = architecture["model"]
-
     max_epochs = 250
     patience = 250
 
@@ -118,8 +97,8 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
                                                           mers=mers)
     j, (train_data, validate_data) = next(enumerate(cross_validation_splits))
 
-    net = NeuralNetwork(CONV_FILTERS, FC_LAYER_COUNT, mers=mers, kernel_sizes=kernel_sizes,
-                        extra_feature_count=extra_feature_count, pool="max").to(device)
+    net = NLayerCNN(CONV_FILTERS, FC_LAYER_COUNT, mers=mers, kernel_sizes=kernel_sizes,
+                    extra_feature_count=extra_feature_count, pool="max").to(device)
     train_dataloader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
     validate_dataloader = DataLoader(validate_data, shuffle=True, batch_size=batch_size)
 
@@ -129,9 +108,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
     train_acc = []
     validate_acc = []
 
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # Training the model 1 time                           #
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # Training loop
     best, best_epoch = (-1., 0)
     for t in range(max_epochs):
         train(optimizer, loss_fn, net, train_dataloader)
@@ -179,7 +156,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
 if __name__ == "__main__":
     # manually adjust this dictionary to reflect the model to be trained
-    g = {"architecture": "four_layer_cnn", "experiment": "ets1_runx1", "mers": 2, "batch_size": 32,
+    g = {"num_layers": 4, "experiment": "ets1_runx1", "mers": 2, "batch_size": 32,
          "extra_features": ["site1_score", "site2_score"],
          "kernel_sizes": [4, 6, 3, 5], "conv_filters": [256, 256, 256, 256], "fc_layer_nodes": 512,
          "file_path": "four_layer_best",
@@ -190,7 +167,7 @@ if __name__ == "__main__":
     output_path = os.getcwd()  # or replace with path to output
     data_path = "<insert path here>"
     experiment = g["experiment"]
-    architecture = g["architecture"]
+    num_layers = g["num_layers"]
     mers = g["mers"]
     batch_size = g["batch_size"]
     kernel_sizes = g["kernel_sizes"]
@@ -201,6 +178,6 @@ if __name__ == "__main__":
     CONV_FILTERS = g["conv_filters"]
     FC_LAYER_COUNT = g["fc_layer_nodes"]
 
-    print(f"experiment: {experiment}, architecture: {architecture}, job_id:{job_id}")
-    process_experiment_architecture_model(job_id, output_path, data_path, experiment, architecture,
+    print(f"experiment: {experiment}, num_layers: {num_layers}, job_id:{job_id}")
+    process_experiment_architecture_model(job_id, output_path, data_path, experiment, num_layers,
                                           mers, batch_size, kernel_sizes, extra_features)

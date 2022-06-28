@@ -16,61 +16,11 @@ from networks import NLayerCNN
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-architecture_maps = {
-    "five_layer_cnn": {
-        "model": NLayerCNN,
-        "params": ("kernel_size", 5),
-        "grid": {
-            "conv_filters": [[256],  # layer 1
-                             [256],  # layer 2
-                             [256],  # layer 3
-                             [256],  # layer 4
-                             [256],  # layer 5
-                             ],
-            "fc_layer_nodes": [512],
-        },
-    },
-    "four_layer_cnn": {
-        "model": NLayerCNN,
-        "params": ("kernel_size", 4),
-        "grid": {
-            "conv_filters": [[256],  # layer 1
-                             [256],  # layer 2
-                             [256],  # layer 3
-                             [256],  # layer 4
-                             ],
-            "fc_layer_nodes": [512],
-        },
-    },
-    "three_layer_cnn": {
-        "model": NLayerCNN,
-        "params": ("kernel_size", 3),
-        "grid": {
-            "conv_filters": [[256],  # layer 1
-                             [256],  # layer 2
-                             [256],  # layer 3
-                             ],
-            "fc_layer_nodes": [512],
-        },
-    },
-    "two_layer_cnn": {
-        "model": NLayerCNN,
-        "params": ("kernel_size", 2),
-        "grid": {
-            "conv_filters": [[256],  # layer 1
-                             [256],  # layer 2
-                             ],
-            "fc_layer_nodes": [512],
-        },
-    },
-    "one_layer_cnn": {
-        "model": NLayerCNN,
-        "params": ("kernel_size", 1),
-        "grid": {
-            "conv_filters": [[256],  # layer 1
-                             ],
-            "fc_layer_nodes": [512],
-        },
+architecture = {
+    "model": NLayerCNN,
+    "grid": {
+        "conv_filters": [256],
+        "fc_layer_nodes": [512],
     },
 }
 
@@ -133,7 +83,7 @@ def plot_train_validate_accuracy(train_series, validate_series, file_name=None):
 
 
 def process_experiment_architecture_model(job_id, output_path, data_path, experiment_name,
-                                          architecture_name, mers, batch_size, kernel_sizes,
+                                          num_layers, mers, batch_size, kernel_sizes,
                                           extra_features):
     extra_feature_count = 0
 
@@ -143,8 +93,6 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
         if "orientation" in extra_features:
             extra_feature_count += 3
 
-    architecture = architecture_maps[architecture_name]
-    _, num_kernels = architecture["params"]
     NeuralNetwork = architecture["model"]
     grid_ranges = architecture["grid"]
 
@@ -152,7 +100,8 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
     patience = 50
 
     # get all possible combinations of the hyper parameter search values
-    grid = list(itertools.product(itertools.product(*grid_ranges["conv_filters"]),
+    grid = list(itertools.product(*[filter_num*num_layers
+                                    for filter_num in grid_ranges["conv_filters"]],
                                   grid_ranges["fc_layer_nodes"]))
 
     # no need for grid search if there is only one combination of hyper parameters
@@ -247,7 +196,7 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
         mean = statistics.mean(cv_max_validate_acc)
         new_result = {
             "random_state": i,
-            "architecture": architecture_name,
+            "num_layers": num_layers,
             "experiment": experiment_name,
             "mers": mers,
             "batch_size": batch_size,
@@ -274,14 +223,14 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
 
 if __name__ == "__main__":
     # argument format:
-    # <job_id> <output_path> <data_path> <"ets1_ets1"|"ets1_runx1"> <architecture>
+    # <job_id> <output_path> <data_path> <"ets1_ets1"|"ets1_runx1"> <num_layers>
     # <mers> <batch_size> <layer_1_kernel_size>,...,<layer_n_kernel_size>
     # <extra_feature_1>,...,<extra_feature_n>
     job_id = sys.argv[1]
     output_path = sys.argv[2]
     data_path = sys.argv[3]
     experiment = sys.argv[4]
-    architecture = sys.argv[5]
+    num_layers = int(sys.argv[5])
     mers = int(sys.argv[6])
     batch_size = int(sys.argv[7])
     kernel_sizes = sys.argv[8].split(",")
@@ -293,6 +242,6 @@ if __name__ == "__main__":
 
     kernel_sizes = [int(k) for k in kernel_sizes]
 
-    print(f"experiment: {experiment}, architecture: {architecture}, job_id:{job_id}")
-    process_experiment_architecture_model(job_id, output_path, data_path, experiment, architecture,
+    print(f"experiment: {experiment}, layers: {num_layers}, job_id:{job_id}")
+    process_experiment_architecture_model(job_id, output_path, data_path, experiment, num_layers,
                                           mers, batch_size, kernel_sizes, extra_features)
