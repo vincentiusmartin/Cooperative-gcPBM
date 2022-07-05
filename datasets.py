@@ -3,44 +3,12 @@ import os
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import KFold
-from sklearn.preprocessing import StandardScaler
+from skorch.helper import SliceDict
 import torch
 from torch.nn import functional
-from torch.utils.data import Dataset
 
 
-class SequenceDataset(Dataset):
-    def __init__(self, seqs, deltas, ids, *extra_features):
-        self.sequences = seqs
-        self.deltas = deltas
-        self.extra_features = extra_features
-        self.ids = ids
-
-    def __len__(self):
-        return len(self.sequences)
-
-    def __getitem__(self, idx):
-        sequence = self.sequences[idx].float()
-        sequence = torch.transpose(sequence, 0, 1)
-
-        extra_features = []
-        for feature in self.extra_features:
-            val = torch.tensor(feature[idx]).float()
-
-            if val.dim() == 0:
-                val = val.unsqueeze(0)
-
-            # print(f"shape: {val.dim()}")
-            extra_features.append(val)
-            # print(f"seq_shape: {sequence.dim()}")
-        deltas = torch.tensor(self.deltas[idx]).float()
-
-        return sequence, deltas, *extra_features
-
-
-def get_cross_validate_datasets(experiment_name, data_path, random_state, extra_features, mers=1,
-                                return_dft=False):
+def get_datasets(experiment_name, data_path, include_affinities=True, mers=2):
     experiment_dict = {
         "ets1_ets1":
             {
@@ -94,67 +62,26 @@ def get_cross_validate_datasets(experiment_name, data_path, random_state, extra_
     sequences = vectorized_make_categorical(sequences)  # encode nucleotides as integers
     sequences = torch.from_numpy(sequences)  # convert to torch tensor
     sequences = functional.one_hot(sequences)  # convert to one-hot encoding
+    sequences = sequences.float()
+    X = {"sequences": sequences}
 
     # Obtain target vector
-    deltas = np.array(dft["delta"])
-    deltas = torch.from_numpy(deltas)
-    deltas = np.expand_dims(deltas, axis=1)
+    y = np.array(dft["delta"])
+    y = torch.from_numpy(y).reshape(-1, 1).float()
 
-    extra_features_data = []
-
-    if extra_features:
+    if include_affinities:
         if experiment_name == "ets1_ets1":
-            if "site1_score" in extra_features:
-                site1_scores = np.array(dft["site_wk_score"])
-                extra_features_data.append(site1_scores)
-
-            if "site2_score" in extra_features:
-                site2_scores = np.array(dft["site_str_score"])
-                extra_features_data.append(site2_scores)
+            X["site1_scores"] = np.array(dft["site_wk_score"])
+            X["site2_scores"] = np.array(dft["site_str_score"])
         else:
-            if "site1_score" in extra_features:
-                site1_scores = np.array(dft["ets1_score"])
-                extra_features_data.append(site1_scores)
-            if "site2_score" in extra_features:
-                site2_scores = np.array(dft["runx1_score"])
-                extra_features_data.append(site2_scores)
-            # runx1_scores = torch.from_numpy(runx1_scores)
+            X["site1_scores"] = np.array(dft["ets1_score"])
+            X["site2_scores"] = np.array(dft["runx1_score"])
 
-        if "orientation" in extra_features:
-            ori_encoding = {"+/+": 0, "+/-": 1, "-/+": 2, "-/-": 3}
+        X["site1_scores"] = torch.from_numpy(X["site1_scores"]).reshape(-1, 1).float()
+        X["site2_scores"] = torch.from_numpy(X["site2_scores"]).reshape(-1, 1).float()
 
-            def encode_orientation(val):
-                return ori_encoding[val]
+    return SliceDict(**X), y
 
-            ori = np.array(dft["orientation"])
-            vec_make_categorical = np.vectorize(encode_orientation)
-            ori = vec_make_categorical(ori)
-            ori = functional.one_hot(torch.from_numpy(ori), num_classes=4)
-            extra_features_data.append(ori)
 
-    k_fold = KFold(n_splits=5, shuffle=True, random_state=random_state)
-    cross_validation_split_ids = k_fold.split(sequences)
-
-    test_train_sets = []
-
-    for train_ids, validate_ids in cross_validation_split_ids:
-        scaler = StandardScaler().fit(deltas[train_ids])
-        deltas_temp = scaler.transform(deltas)
-        deltas_temp = np.squeeze(deltas_temp, axis=1)
-
-        extra_features_train_sets = ([feature[train_ids] for feature in extra_features_data]
-                                     if extra_features is not None else ())
-        extra_features_validate_sets = ([feature[validate_ids] for feature in extra_features_data]
-                                        if extra_features is not None else ())
-        test_train_sets.append((
-            SequenceDataset(sequences[train_ids], deltas_temp[train_ids], train_ids,
-                            *extra_features_train_sets),
-            SequenceDataset(sequences[validate_ids], deltas_temp[validate_ids], validate_ids,
-                            *extra_features_validate_sets)
-        ))
-
-        if return_dft:
-            test_train_sets[-1] = (*test_train_sets[-1], dft)
-
-    # standardization needs to happen here. Also need a mechanism to turn it on and off.
-    return test_train_sets
+if __name__ == "__main__":
+    get_datasets("ets1_ets1", "~/research_code/data", include_affinities=True, mers=1)

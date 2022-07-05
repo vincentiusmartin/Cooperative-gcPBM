@@ -1,13 +1,19 @@
 import torch
 from torch import nn
+from skorch import NeuralNetRegressor
 
 
 class NLayerCNN(nn.Module):
-    def __init__(self, conv_filters, fc_node_count, kernel_sizes, extra_feature_count, pool=None,
-                 mers=3):
+    def __init__(self, conv_filters, fc_node_count, kernel_sizes, include_affinities=False,
+                 pool=None, mers=3):
         super(NLayerCNN, self).__init__()
+        self.include_affinities = include_affinities
+
         padded_length = 36 - mers + 2 + 1  # + 2 for padding
         in_channels = 4 ** mers
+
+        if type(conv_filters) == int:
+            conv_filters = [conv_filters] * len(kernel_sizes)
 
         self.conv_layers = [
             nn.Sequential(
@@ -26,16 +32,10 @@ class NLayerCNN(nn.Module):
             if pool == "max":
                 params.append(nn.MaxPool1d(2))
 
-            if pool == "avg":
-                params.append(nn.AvgPool1d(2))
-
             self.conv_layers.append(nn.Sequential(*params))
 
         self.conv_layers = nn.ModuleList(self.conv_layers)
-
         self.flatten = nn.Flatten()
-
-        fc_node_count = fc_node_count
 
         # compute remaining horizontal positions
         if pool is not None:
@@ -46,7 +46,10 @@ class NLayerCNN(nn.Module):
         else:
             one_d_length = padded_length + sum(1 - kernel_size for kernel_size in kernel_sizes)
 
-        fc_input_size = extra_feature_count + conv_filters[-1] * one_d_length
+        fc_input_size = conv_filters[-1] * one_d_length
+
+        if include_affinities:
+            fc_input_size += 2
 
         self.dense_layer = nn.Sequential(
             nn.Linear(fc_input_size, fc_node_count),
@@ -56,14 +59,22 @@ class NLayerCNN(nn.Module):
             nn.Linear(128, 1),
         )
 
-    def forward(self, X, *extra_features):
+    def forward(self, sequences, site1_scores=None, site2_scores=None):
+        X = sequences.transpose(1, 2)
         for conv_layer in self.conv_layers:
             X = conv_layer(X)
 
         X = self.flatten(X)
 
-        if len(extra_features):
-            X = torch.cat((X, *extra_features), 1)
+        if self.include_affinities:
+            X = torch.cat((X, site1_scores, site2_scores), 1).float()
 
         X = self.dense_layer(X)
         return X
+
+
+class SkorchNeuralNetRegressor(NeuralNetRegressor):
+    def fit(self, X, y, **kwargs):
+        if y.ndim == 1:
+            y = y.reshape(-1, 1)
+        return super().fit(X, y, **kwargs)

@@ -5,63 +5,23 @@ import statistics
 import sys
 
 import matplotlib.pyplot as plt
-from sklearn import metrics
+from sklearn.compose import TransformedTargetRegressor
+from sklearn.model_selection import cross_validate, GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
+import skorch
 import torch
-from torch.nn import MSELoss
-from torch.utils.data import DataLoader
 
-from datasets import get_cross_validate_datasets
-from networks import NLayerCNN
+from datasets import get_datasets
+from networks import NLayerCNN, SkorchNeuralNetRegressor
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-architecture = {
-    "model": NLayerCNN,
-    "grid": {
-        "conv_filters": [256],
-        "fc_layer_nodes": [512],
-    },
+param_grid = {
+    "regressor__module__conv_filters": [256],
+    "regressor__module__fc_node_count": [512],
 }
-
-
-def train(optimizer, loss_fn, model, dataloader):
-    model.train()
-
-    for X, y_true, *extra_features in dataloader:
-        for i in range(0, len(extra_features)):
-            extra_features[i] = extra_features[i].to(device)
-
-        X = X.to(device)
-        y_true = y_true.to(device)
-        y_hat = model(X, *extra_features)
-        y_hat = y_hat.flatten()
-        loss = loss_fn(y_hat, y_true)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-
-# accumulate SS_residual and SS_total to compute R2 = 1 - SS_residual/SS_total
-
-def get_r2(model, dataloader):
-    y_hat_arr, y_true_arr = [], []
-    model.eval()
-
-    with torch.no_grad():
-        for X, y, *extra_features in dataloader:
-            for i in range(0, len(extra_features)):
-                extra_features[i] = extra_features[i].to(device)
-
-            X = X.to(device)
-            y = y.to("cpu")
-            y_hat = model(X, *extra_features).to("cpu")
-            y_hat = y_hat.flatten()
-            y_hat_arr += list(y_hat)
-            y_true_arr += list(y)
-
-    return metrics.r2_score(y_true_arr, y_hat_arr)
 
 
 def plot_train_validate_accuracy(train_series, validate_series, file_name=None):
@@ -74,6 +34,7 @@ def plot_train_validate_accuracy(train_series, validate_series, file_name=None):
 
     ax1.axhline(y=0, color="grey", linestyle="--")
     ax1.axhline(y=max(validate_series), color="grey", linestyle="--")
+    plt.ylim(0, max(validate_series))
     plt.xlabel("epochs")
     plt.ylabel("accuracy ($R^2$)")
     ax1.legend()
@@ -82,69 +43,52 @@ def plot_train_validate_accuracy(train_series, validate_series, file_name=None):
         plt.savefig(file_name, format="pdf")
 
 
-def process_experiment_architecture_model(job_id, output_path, data_path, experiment_name,
-                                          num_layers, mers, batch_size, kernel_sizes,
-                                          extra_features):
-    extra_feature_count = 0
+def process_experiment_architecture_model(
+        job_id,
+        output_path,
+        data_path,
+        experiment_name,
+        num_layers,
+        mers,
+        batch_size,
+        kernel_sizes,
+        include_affinities=False,
+        patience=50,
+        max_epochs=150,
+        debug=False,
+):
+    datasets = get_datasets(experiment_name, data_path=data_path,
+                            include_affinities=include_affinities, mers=mers)
 
-    if extra_features is not None:
-        extra_feature_count = len(extra_features)
+    random_state = 1239283591
 
-        if "orientation" in extra_features:
-            extra_feature_count += 3
+    datasets = shuffle(*datasets, random_state=random_state)
+    Xs, y = datasets
 
-    NeuralNetwork = architecture["model"]
-    grid_ranges = architecture["grid"]
+    if debug:
+        Xs, y = Xs[:25], y[:25]
 
-    max_epochs = 150
-    patience = 50
+    if any(True for param_comb in param_grid.values() if len(param_comb) > 1):
+        net = SkorchNeuralNetRegressor(module=NLayerCNN,
+                                       module__mers=mers,
+                                       module__kernel_sizes=kernel_sizes,
+                                       module__include_affinities=include_affinities,
+                                       criterion=torch.nn.MSELoss,
+                                       optimizer=torch.optim.Adam, device=device,
+                                       max_epochs=max_epochs, batch_size=batch_size,
+                                       callbacks=[("early_stopping",
+                                                   skorch.callbacks.EarlyStopping(
+                                                       patience=patience, monitor="valid_loss"))])
 
-    # get all possible combinations of the hyper parameter search values
-    grid = list(itertools.product(*[filter_num*num_layers
-                                    for filter_num in grid_ranges["conv_filters"]],
-                                  grid_ranges["fc_layer_nodes"]))
+        regressor = TransformedTargetRegressor(regressor=net, transformer=StandardScaler())
+        grid_search = GridSearchCV(regressor, param_grid=param_grid, cv=5, n_jobs=-1)
+        grid_search.fit(Xs, y)
 
-    # no need for grid search if there is only one combination of hyper parameters
-    if len(grid) > 1:
-        random_state = 1239283591
-        cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
-                                                          random_state=random_state,
-                                                          extra_features=extra_features, mers=mers)
-
-        cv_means = []
-        for grid_params in grid:
-            cv_max_validate_acc = []
-            for j, (train_data, validate_data) in enumerate(cross_validation_splits):
-                net = NeuralNetwork(*grid_params, mers=mers, kernel_sizes=kernel_sizes,
-                                    extra_feature_count=extra_feature_count).to(device)
-
-                train_dataloader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
-                validate_dataloader = DataLoader(validate_data, shuffle=True, batch_size=batch_size)
-
-                optimizer = torch.optim.Adam(net.parameters())
-                loss_fn = MSELoss()
-
-                validate_acc = []
-
-                # Training loop
-                best, best_epoch = (-1., 0)
-                for t in range(max_epochs):
-                    train(optimizer, loss_fn, net, train_dataloader)
-                    validate_r2 = get_r2(net, validate_dataloader)
-                    validate_acc.append(validate_r2)
-
-                    if validate_r2 > best:
-                        best, best_epoch = validate_r2, t
-                    elif t > patience + best_epoch:
-                        break
-
-                cv_max_validate_acc.append(max(validate_acc))
-
-            cv_means.append((grid_params, statistics.mean(cv_max_validate_acc)))
-
-        best_grid_params = max(cv_means, key=lambda x: x[1])[0]
+        filters_per_layer = grid_search.best_params_["regressor__module__conv_filters"]
+        fc_node_count = grid_search.best_params_["regressor__module__fc_node_count"]
     else:
-        best_grid_params = grid[0]
+        filters_per_layer = param_grid["regressor__module__conv_filters"][0]
+        fc_node_count = param_grid["regressor__module__fc_node_count"][0]
 
     file_path = os.path.join(output_path, f"task_{job_id}.json")
 
@@ -155,43 +99,38 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
     # run five 5-fold cross-validations and take average to approximate R^2 on unseen data
     for i, random_state in enumerate(
             (3454832692, 3917820095, 851603617, 432544541, 4162995973)):
-        cross_validation_splits = get_cross_validate_datasets(experiment_name, data_path=data_path,
-                                                              random_state=random_state,
-                                                              extra_features=extra_features,
-                                                              mers=mers)
+        # X must be: {sequences: [], site1_score: [], site2_score: []}
+        Xs, y = shuffle(Xs, y, random_state=random_state)
 
-        epoch_counts = []
-        cv_max_validate_acc = []
-        for j, (train_data, validate_data) in enumerate(cross_validation_splits):
-            net = NeuralNetwork(*best_grid_params, mers=mers, kernel_sizes=kernel_sizes,
-                                extra_feature_count=extra_feature_count).to(device)
-            train_dataloader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
-            validate_dataloader = DataLoader(validate_data, shuffle=True, batch_size=batch_size)
+        net = SkorchNeuralNetRegressor(module=NLayerCNN,
+                                       module__conv_filters=filters_per_layer,
+                                       module__fc_node_count=fc_node_count, module__mers=mers,
+                                       module__kernel_sizes=kernel_sizes,
+                                       module__include_affinities=include_affinities,
+                                       criterion=torch.nn.MSELoss, optimizer=torch.optim.Adam,
+                                       device=device, max_epochs=max_epochs, batch_size=batch_size,
+                                       callbacks=[
+                                           ("early_stopping",
+                                            skorch.callbacks.EarlyStopping(patience=patience,
+                                                                           monitor="valid_loss")),
+                                           ("epoch_scoring",
+                                            skorch.callbacks.EpochScoring(
+                                                scoring="r2", lower_is_better=False))
+                                       ])
 
-            optimizer = torch.optim.Adam(net.parameters())
-            loss_fn = MSELoss()
+        regressor = TransformedTargetRegressor(regressor=net, transformer=StandardScaler())
 
-            # train_acc = []
-            validate_acc = []
+        results = cross_validate(regressor, Xs, y, cv=5, scoring="r2", n_jobs=-1,
+                                 return_estimator=True)
 
-            # Training loop
-            best, best_epoch = (-1., 0)
-            for t in range(max_epochs):
-                epoch_counts.append(t)
-                train(optimizer, loss_fn, net, train_dataloader)
-                # train_acc.append(get_r2(net, train_dataloader))
-                validate_r2 = get_r2(net, validate_dataloader)
-                validate_acc.append(validate_r2)
+        histories = [estimator.regressor_.history for estimator in results["estimator"]]
 
-                if validate_r2 > best:
-                    best, best_epoch = validate_r2, t
-                elif t > patience + best_epoch:
-                    break
+        cv_max_validate_acc = [max(history[:, "r2"]) for history in histories]
 
-            cv_max_validate_acc.append(max(validate_acc))
-            # plot_train_validate_accuracy(train_acc, validate_acc,
-            #                              os.path.join(output_path, f"task_{job_id}.pdf"))
-            # torch.save(net.state_dict(), os.path.join(output_path, f"task_{job_id}.pt"))
+        plot_train_validate_accuracy(histories[0][:, "train_loss"],
+                                     histories[0][:, "valid_loss"],
+                                     os.path.join(output_path, f"task_{job_id}.pdf"))
+        # torch.save(net.state_dict(), os.path.join(output_path, f"task_{job_id}.pt"))
 
         mean = statistics.mean(cv_max_validate_acc)
         new_result = {
@@ -200,17 +139,19 @@ def process_experiment_architecture_model(job_id, output_path, data_path, experi
             "experiment": experiment_name,
             "mers": mers,
             "batch_size": batch_size,
-            "epochs": statistics.mean(epoch_counts),
+            # "epochs": statistics.mean(epoch_counts),
             "cross_validation_test_r2": cv_max_validate_acc,
             "cv_test_r2_mean": mean,
             "cv_test_r2_mean_std": statistics.stdev(cv_max_validate_acc, mean),
             "patience": patience,
-            "extra_features": extra_features,
+            "include_affinities": include_affinities,
         }
 
-        new_result.update({"kernel_sizes": kernel_sizes})
-
-        new_result.update(dict(zip(list(grid_ranges.keys()), best_grid_params)))
+        new_result.update({
+            "kernel_sizes": kernel_sizes,
+            "conv_filters": filters_per_layer,
+            "fc_node_count": fc_node_count,
+        })
 
         with open(file_path, "r+") as f:
             json_list = json.load(f)
@@ -244,4 +185,14 @@ if __name__ == "__main__":
 
     print(f"experiment: {experiment}, layers: {num_layers}, job_id:{job_id}")
     process_experiment_architecture_model(job_id, output_path, data_path, experiment, num_layers,
-                                          mers, batch_size, kernel_sizes, extra_features)
+                                          mers, batch_size, kernel_sizes, include_affinities)
+
+
+if __name__ == "__main__":
+    # main()
+
+    process_experiment_architecture_model(1,
+                                          "/Users/kylepinheiro/compsci260/dl_cooperativity/output",
+                                          "/Users/kylepinheiro/research_code/data", "ets1_runx1", 2,
+                                          1, 32, [8, 8], True, patience=20, max_epochs=50,
+                                          debug=False)
