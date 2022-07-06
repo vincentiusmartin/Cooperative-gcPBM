@@ -4,7 +4,7 @@ from skorch import NeuralNetRegressor
 
 
 class NLayerCNN(nn.Module):
-    def __init__(self, conv_filters, fc_node_count, kernel_sizes, include_affinities=False,
+    def __init__(self, conv_filters, fc_node_count, kernel_widths, include_affinities=False,
                  pool=None, mers=3):
         super(NLayerCNN, self).__init__()
         self.include_affinities = include_affinities
@@ -13,19 +13,19 @@ class NLayerCNN(nn.Module):
         in_channels = 4 ** mers
 
         if type(conv_filters) == int:
-            conv_filters = [conv_filters] * len(kernel_sizes)
+            conv_filters = [conv_filters] * len(kernel_widths)
 
         self.conv_layers = [
             nn.Sequential(
                 nn.ConstantPad1d(1, 1/(4**mers)),
-                nn.Conv1d(in_channels, conv_filters[0], kernel_sizes[0]),
+                nn.Conv1d(in_channels, conv_filters[0], kernel_widths[0]),
                 nn.ReLU(),
             )
         ]
 
         for i in range(1, len(conv_filters)):
             params = [
-                nn.Conv1d(conv_filters[i-1], conv_filters[i], kernel_sizes[i]),
+                nn.Conv1d(conv_filters[i-1], conv_filters[i], kernel_widths[i]),
                 nn.ReLU()
             ]
 
@@ -39,12 +39,12 @@ class NLayerCNN(nn.Module):
 
         # compute remaining horizontal positions
         if pool is not None:
-            one_d_length = (padded_length - kernel_sizes[0] + 1)
+            one_d_length = (padded_length - kernel_widths[0] + 1)
 
-            for kernel_size in kernel_sizes[1:]:
+            for kernel_size in kernel_widths[1:]:
                 one_d_length = (one_d_length - kernel_size + 1) // 2
         else:
-            one_d_length = padded_length + sum(1 - kernel_size for kernel_size in kernel_sizes)
+            one_d_length = padded_length + sum(1 - kernel_size for kernel_size in kernel_widths)
 
         fc_input_size = conv_filters[-1] * one_d_length
 

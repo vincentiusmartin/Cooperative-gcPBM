@@ -17,6 +17,7 @@ from networks import NLayerCNN, SkorchNeuralNetRegressor
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+# This should probably be factored out into a configuration file
 param_grid = {
     "regressor__module__conv_filters": [256],
     "regressor__module__fc_node_count": [512],
@@ -50,7 +51,7 @@ def process_experiment_architecture_model(
         num_layers,
         mers,
         batch_size,
-        kernel_sizes,
+        kernel_widths,
         include_affinities=False,
         patience=50,
         max_epochs=150,
@@ -70,7 +71,7 @@ def process_experiment_architecture_model(
     if any(True for param_comb in param_grid.values() if len(param_comb) > 1):
         net = SkorchNeuralNetRegressor(module=NLayerCNN,
                                        module__mers=mers,
-                                       module__kernel_sizes=kernel_sizes,
+                                       module__kernel_widths=kernel_widths,
                                        module__include_affinities=include_affinities,
                                        criterion=torch.nn.MSELoss,
                                        optimizer=torch.optim.Adam, device=device,
@@ -104,7 +105,7 @@ def process_experiment_architecture_model(
         net = SkorchNeuralNetRegressor(module=NLayerCNN,
                                        module__conv_filters=filters_per_layer,
                                        module__fc_node_count=fc_node_count, module__mers=mers,
-                                       module__kernel_sizes=kernel_sizes,
+                                       module__kernel_widths=kernel_widths,
                                        module__include_affinities=include_affinities,
                                        criterion=torch.nn.MSELoss, optimizer=torch.optim.Adam,
                                        device=device, max_epochs=max_epochs, batch_size=batch_size,
@@ -124,6 +125,7 @@ def process_experiment_architecture_model(
 
         histories = [estimator.regressor_.history for estimator in results["estimator"]]
 
+        # TODO: this needs to be reformed to match the scores returned by the cross_validation
         cv_max_validate_acc = [max(history[:, "r2"]) for history in histories]
 
         plot_train_validate_accuracy(histories[0][:, "train_loss"],
@@ -147,7 +149,7 @@ def process_experiment_architecture_model(
         }
 
         new_result.update({
-            "kernel_sizes": kernel_sizes,
+            "kernel_widths": kernel_widths,
             "conv_filters": filters_per_layer,
             "fc_node_count": fc_node_count,
         })
@@ -161,12 +163,7 @@ def process_experiment_architecture_model(
             f.truncate()
 
 
-def main():
-    # argument format:
-    # <job_id> <output_path> <data_path> <"ets1_ets1"|"ets1_runx1"> <num_layers>
-    # <mers> <batch_size> <layer_1_kernel_size>,...,<layer_n_kernel_size>
-    # <extra_feature_1>,...,<extra_feature_n>
-
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train and cross validate models.")
 
     parser.add_argument("job_id", type=int)
@@ -176,7 +173,7 @@ def main():
     parser.add_argument("num_layers", type=int)
     parser.add_argument("mers", type=int)
     parser.add_argument("batch_size", type=int)
-    parser.add_argument("kernel_sizes", type=str, help="this should be comma-separated (no spaces)")
+    parser.add_argument("kernel_widths", type=str, help="must be comma-separated with no spaces")
     parser.add_argument("include_affinities", type=str)
 
     args = parser.parse_args()
@@ -188,19 +185,9 @@ def main():
     num_layers = args.num_layers
     mers = args.mers
     batch_size = args.batch_size
-    kernel_sizes = [int(k) for k in args.kernel_sizes.split(",")]
+    kernel_widths = [int(k) for k in args.kernel_widths.split(",")]
     include_affinities = bool(args.include_affinities.lower() in ("TRUE", "YES", "T", "Y"))
 
     print(f"experiment: {experiment}, layers: {num_layers}, job_id:{job_id}")
     process_experiment_architecture_model(job_id, output_path, data_config, experiment, num_layers,
-                                          mers, batch_size, kernel_sizes, include_affinities)
-
-
-if __name__ == "__main__":
-    main()
-
-    # process_experiment_architecture_model(1,
-    #                                       "/Users/kylepinheiro/compsci260/dl_cooperativity/output",
-    #                                       "/Users/kylepinheiro/research_code/data", "ets1_runx1", 2,
-    #                                       1, 32, [8, 8], True, patience=20, max_epochs=50,
-    #                                       debug=False)
+                                          mers, batch_size, kernel_widths, include_affinities)
