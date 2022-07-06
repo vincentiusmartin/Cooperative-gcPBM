@@ -1,4 +1,5 @@
 import itertools
+import json
 import os
 
 import numpy as np
@@ -8,24 +9,15 @@ import torch
 from torch.nn import functional
 
 
-def get_datasets(experiment_name, data_path, include_affinities=True, mers=2):
-    experiment_dict = {
-        "ets1_ets1":
-            {
-                "labeled_data_path": os.path.join(data_path, "lbled_o1_selected.csv"),
-                "training_data_path": os.path.join(data_path, "train_ets1_ets1.tsv"),
-            },
-        "ets1_runx1":
-            {
-                "labeled_data_path": os.path.join(data_path, "both_ori_plt_ets1_runx1.csv"),
-                "training_data_path": os.path.join(data_path, "train_ets1_runx1.tsv"),
-            },
-    }
+def get_datasets(experiment_name, data_config, include_affinities=True, mers=2):
+    with open(data_config, "r") as f:
+        experiment_dict = json.load(f)
 
     experiment = experiment_dict[experiment_name]
 
-    df_delta = pd.read_csv(experiment["labeled_data_path"])
-    dft = pd.read_csv(experiment["training_data_path"], sep="\t")
+    # potentially consolidate these pairs of data files.
+    df_delta = pd.read_csv(os.path.join(experiment_dict["path"], experiment["deltas_file"]))
+    dft = pd.read_csv(os.path.join(experiment_dict["path"], experiment["input_data_file"]), sep="\t")
 
     df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
 

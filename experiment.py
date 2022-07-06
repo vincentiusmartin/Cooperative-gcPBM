@@ -1,8 +1,7 @@
-import itertools
+import argparse
 import json
 import os
 import statistics
-import sys
 
 import matplotlib.pyplot as plt
 from sklearn.compose import TransformedTargetRegressor
@@ -46,7 +45,7 @@ def plot_train_validate_accuracy(train_series, validate_series, file_name=None):
 def process_experiment_architecture_model(
         job_id,
         output_path,
-        data_path,
+        data_config,
         experiment_name,
         num_layers,
         mers,
@@ -57,7 +56,7 @@ def process_experiment_architecture_model(
         max_epochs=150,
         debug=False,
 ):
-    datasets = get_datasets(experiment_name, data_path=data_path,
+    datasets = get_datasets(experiment_name, data_config=data_config,
                             include_affinities=include_affinities, mers=mers)
 
     random_state = 1239283591
@@ -162,37 +161,46 @@ def process_experiment_architecture_model(
             f.truncate()
 
 
-if __name__ == "__main__":
+def main():
     # argument format:
     # <job_id> <output_path> <data_path> <"ets1_ets1"|"ets1_runx1"> <num_layers>
     # <mers> <batch_size> <layer_1_kernel_size>,...,<layer_n_kernel_size>
     # <extra_feature_1>,...,<extra_feature_n>
-    job_id = sys.argv[1]
-    output_path = sys.argv[2]
-    data_path = sys.argv[3]
-    experiment = sys.argv[4]
-    num_layers = int(sys.argv[5])
-    mers = int(sys.argv[6])
-    batch_size = int(sys.argv[7])
-    kernel_sizes = sys.argv[8].split(",")
-    extra_features = sys.argv[9]
-    if extra_features == "":
-        extra_features = None
-    else:
-        extra_features = extra_features.split(",")
 
-    kernel_sizes = [int(k) for k in kernel_sizes]
+    parser = argparse.ArgumentParser(description="Train and cross validate models.")
+
+    parser.add_argument("job_id", type=int)
+    parser.add_argument("output_path", type=str)
+    parser.add_argument("data_config", type=str)
+    parser.add_argument("experiment", type=str)
+    parser.add_argument("num_layers", type=int)
+    parser.add_argument("mers", type=int)
+    parser.add_argument("batch_size", type=int)
+    parser.add_argument("kernel_sizes", type=str, help="this should be comma-separated (no spaces)")
+    parser.add_argument("include_affinities", type=str)
+
+    args = parser.parse_args()
+
+    job_id = args.job_id
+    output_path = args.output_path
+    data_config = args.data_config
+    experiment = args.experiment
+    num_layers = args.num_layers
+    mers = args.mers
+    batch_size = args.batch_size
+    kernel_sizes = [int(k) for k in args.kernel_sizes.split(",")]
+    include_affinities = bool(args.include_affinities.lower() in ("TRUE", "YES", "T", "Y"))
 
     print(f"experiment: {experiment}, layers: {num_layers}, job_id:{job_id}")
-    process_experiment_architecture_model(job_id, output_path, data_path, experiment, num_layers,
+    process_experiment_architecture_model(job_id, output_path, data_config, experiment, num_layers,
                                           mers, batch_size, kernel_sizes, include_affinities)
 
 
 if __name__ == "__main__":
-    # main()
+    main()
 
-    process_experiment_architecture_model(1,
-                                          "/Users/kylepinheiro/compsci260/dl_cooperativity/output",
-                                          "/Users/kylepinheiro/research_code/data", "ets1_runx1", 2,
-                                          1, 32, [8, 8], True, patience=20, max_epochs=50,
-                                          debug=False)
+    # process_experiment_architecture_model(1,
+    #                                       "/Users/kylepinheiro/compsci260/dl_cooperativity/output",
+    #                                       "/Users/kylepinheiro/research_code/data", "ets1_runx1", 2,
+    #                                       1, 32, [8, 8], True, patience=20, max_epochs=50,
+    #                                       debug=False)
