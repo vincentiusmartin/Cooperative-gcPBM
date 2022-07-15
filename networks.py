@@ -4,8 +4,25 @@ from skorch import NeuralNetRegressor
 
 
 class NLayerCNN(nn.Module):
+    """A convolutional neural network for which a number of parameters can be configured.
+    Number of layers of convolution are determined by the number of elements in kernel_widths list
+    argument.
+    """
     def __init__(self, conv_filters, fc_node_count, kernel_widths, include_affinities=False,
-                 pool=None, mers=3):
+                 pool=False, mers=3):
+        """Initialize the convolutional neural network.
+
+        Args:
+        conv_filters: number of convolutional filters. Can be a single integer, in which case all
+        layers will have same number of filters. If a list, it specifies the number of filters at
+        each layer.
+        fc_node_count: This specifies the number of nodes in the first fully-connected layer.
+        kernel_widths: This list specifies the size of the filters for the kernels at each layer.
+        The size of the neural network is determined by the length of the kernel_widths argument.
+        include_affinities: whether or not to include affinities.
+        pool: whether to apply max pooling after all layers (except first).
+        mers: number of mers.
+        """
         super(NLayerCNN, self).__init__()
         self.include_affinities = include_affinities
 
@@ -29,7 +46,7 @@ class NLayerCNN(nn.Module):
                 nn.ReLU()
             ]
 
-            if pool == "max":
+            if pool:
                 params.append(nn.MaxPool1d(2))
 
             self.conv_layers.append(nn.Sequential(*params))
@@ -38,7 +55,7 @@ class NLayerCNN(nn.Module):
         self.flatten = nn.Flatten()
 
         # compute remaining horizontal positions
-        if pool is not None:
+        if pool:
             one_d_length = (padded_length - kernel_widths[0] + 1)
 
             for kernel_size in kernel_widths[1:]:
@@ -74,6 +91,13 @@ class NLayerCNN(nn.Module):
 
 
 class SkorchNeuralNetRegressor(NeuralNetRegressor):
+    """Override 'fit' to re-expand to 2 dimensions, as skorch requires.
+    This is necessary because TransformedTargetRegressor reduces target tensor to 1 dimension.
+    """
+    def __init__(self, **kwargs):
+        kwargs["module"] = NLayerCNN
+        super(SkorchNeuralNetRegressor, self).__init__(**kwargs)
+
     def fit(self, X, y, **kwargs):
         if y.ndim == 1:
             y = y.reshape(-1, 1)

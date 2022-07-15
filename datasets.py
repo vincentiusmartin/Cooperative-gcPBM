@@ -10,14 +10,26 @@ from torch.nn import functional
 
 
 def get_datasets(experiment_name, data_config, include_affinities=True, mers=2):
-    with open(data_config, "r") as f:
-        experiment_dict = json.load(f)
+    """Retrieve input features and target labels.
 
-    experiment = experiment_dict[experiment_name]
+    Args:
+        experiment_name: "ets1_ets1" or "ets1_runx1".
+        data_config: file path to json.
+        include_affinities: boolean to specify whether to include affinity as input feature.
+        mers: number of mers.
+
+    Returns:
+        X: SliceDict containing input features
+        y: pytorch.tensor containing target values
+    """
+    with open(data_config, "r") as f:
+        exp_dict = json.load(f)
+
+    experiment = exp_dict[experiment_name]
 
     # potentially consolidate these pairs of data files.
-    df_delta = pd.read_csv(os.path.join(experiment_dict["path"], experiment["deltas_file"]))
-    dft = pd.read_csv(os.path.join(experiment_dict["path"], experiment["input_data_file"]), sep="\t")
+    df_delta = pd.read_csv(os.path.join(exp_dict["path"], experiment["deltas_file"]))
+    dft = pd.read_csv(os.path.join(exp_dict["path"], experiment["input_data_file"]), sep="\t")
 
     df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
 
@@ -74,6 +86,3 @@ def get_datasets(experiment_name, data_config, include_affinities=True, mers=2):
 
     return SliceDict(**X), y
 
-
-if __name__ == "__main__":
-    get_datasets("ets1_ets1", "~/research_code/data", include_affinities=True, mers=1)
