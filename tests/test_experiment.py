@@ -8,7 +8,7 @@ class TestExperiment(unittest.TestCase):
     files_to_remove = []
 
     def __init__(self, methodName):
-        super(TestExperiment, self).__init__(methodName)
+        super().__init__(methodName)
 
         self.experiment_params = dict(
             output_path="./output",
@@ -20,8 +20,8 @@ class TestExperiment(unittest.TestCase):
             kernel_widths=[4, 4],
             include_affinities=False,
             pool=False,
-            patience=10,
-            max_epochs=40,
+            patience=20,
+            max_epochs=60,
             debug=True,
         )
 

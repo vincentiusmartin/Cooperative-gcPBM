@@ -5,7 +5,7 @@ import shutil
 
 import matplotlib.pyplot as plt
 from sklearn.compose import TransformedTargetRegressor
-from sklearn.model_selection import cross_validate, GridSearchCV
+from sklearn.model_selection import cross_validate
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 import skorch
@@ -15,15 +15,10 @@ from datasets import get_datasets
 from networks import SkorchNeuralNetRegressor
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-# This should probably be factored out into a configuration file
-param_grid = {
-    "regressor__module__conv_filters": [256],
-    "regressor__module__fc_node_count": [512],
-}
+print(f"device: {device}")
 
 
-def plot_train_validate_accuracy(train_series, validate_series, file_name=None):
+def plot_loss_curves(train_series, validate_series, file_name=None):
     epochs = len(train_series)
     fig1, ax1 = plt.subplots()
     fig1.set_size_inches(16, 6)
@@ -32,10 +27,10 @@ def plot_train_validate_accuracy(train_series, validate_series, file_name=None):
     ax1.plot(range(epochs), validate_series, label="validation")
 
     ax1.axhline(y=0, color="grey", linestyle="--")
-    ax1.axhline(y=max(validate_series), color="grey", linestyle="--")
+    ax1.axhline(y=min(validate_series), color="grey", linestyle="--")
     plt.ylim(0, max(validate_series))
     plt.xlabel("epochs")
-    plt.ylabel("accuracy ($R^2$)")
+    plt.ylabel("loss")
     ax1.legend()
     plt.show()
     if file_name:
@@ -46,29 +41,6 @@ class CustomPrefixCheckpoint(skorch.callbacks.Checkpoint):
     def initialize(self):
         self.fn_prefix = str(id(self))
         return super(CustomPrefixCheckpoint, self).initialize()
-
-
-def param_grid_search(Xs, y, net_params, patience, temp_directory):
-
-    net = SkorchNeuralNetRegressor(
-        callbacks=[
-            skorch.callbacks.EarlyStopping(patience=patience, monitor="valid_loss"),
-            CustomPrefixCheckpoint(monitor="valid_loss_best", load_best=True,
-                                   dirname=temp_directory)
-        ],
-        **net_params,
-    )
-
-    regressor = TransformedTargetRegressor(regressor=net, transformer=StandardScaler(),
-                                           check_inverse=False)
-    grid_search = GridSearchCV(regressor, param_grid=param_grid, cv=5, n_jobs=-1,
-                               error_score="raise")
-    grid_search.fit(Xs, y)
-
-    shutil.rmtree(temp_directory)
-
-    return (grid_search.best_params_["regressor__module__conv_filters"],
-            grid_search.best_params_["regressor__module__fc_node_count"])
 
 
 def process_experiment(
@@ -82,21 +54,32 @@ def process_experiment(
         kernel_widths,
         include_affinities=False,
         pool=False,
+        dropout_rate=0,
+        weight_decay=0,
+        lr=0.001,
+        conv_filters=256,
+        fc_node_count=512,
         patience=50,
-        max_epochs=150,
+        max_epochs=200,
         debug=False,
 ):
     net_params = {
         "device": device,
         "optimizer": torch.optim.Adam,
-        "optimizer__lr": 0.001,
+        "optimizer__lr": lr,
+        "optimizer__weight_decay": weight_decay,
+        "iterator_train__shuffle": True,
         "criterion": torch.nn.MSELoss,
         "module__mers": mers,
         "module__kernel_widths": kernel_widths,
         "module__include_affinities": include_affinities,
         "module__pool": pool,
+        "module__conv_filters": conv_filters,
+        "module__fc_node_count": fc_node_count,
         "max_epochs": max_epochs,
+        "module__dropout": dropout_rate,
         "batch_size": batch_size,
+        "verbose": 0,
     }
     datasets = get_datasets(experiment_name, data_config=data_config,
                             include_affinities=include_affinities, mers=mers)
@@ -108,14 +91,6 @@ def process_experiment(
 
     if debug:
         Xs, y = Xs[:50], y[:50]
-
-    if any(True for param_comb in param_grid.values() if len(param_comb) > 1):
-        (net_params["module__conv_filters"],
-         net_params["module__fc_node_count"]) = param_grid_search(Xs, y, net_params, patience,
-                                                                  temp_dir)
-    else:
-        net_params["module__conv_filters"] = param_grid["regressor__module__conv_filters"][0]
-        net_params["module__fc_node_count"] = param_grid["regressor__module__fc_node_count"][0]
 
     file_path = os.path.join(output_path, f"task_{job_id}.json")
 
@@ -132,9 +107,7 @@ def process_experiment(
         net = SkorchNeuralNetRegressor(
             callbacks=[
                 skorch.callbacks.EarlyStopping(patience=patience, monitor="valid_loss"),
-                skorch.callbacks.EpochScoring(scoring="r2", lower_is_better=False),
-                CustomPrefixCheckpoint(monitor="valid_loss_best", load_best=True,
-                                       dirname=temp_dir),
+                CustomPrefixCheckpoint(monitor="valid_loss_best", load_best=True, dirname=temp_dir),
             ],
             **net_params,
         )
@@ -143,13 +116,16 @@ def process_experiment(
                                                check_inverse=False)
 
         results = cross_validate(regressor, Xs, y, cv=5, scoring="r2", n_jobs=-1,
-                                 return_estimator=True)
+                                 return_estimator=True, return_train_score=True)
 
-        # histories = [estimator.regressor_.history for estimator in results["estimator"]]
+        histories = [estimator.regressor_.history for estimator in results["estimator"]]
 
-        # plot_train_validate_accuracy(histories[0][:, "train_loss"],
-        #                              histories[0][:, "valid_loss"],
-        #                              os.path.join(output_path, f"task_{job_id}.pdf"))
+        if i == 1:
+            plot_loss_curves(histories[0][:, "train_loss"], histories[0][:, "valid_loss"],
+                             os.path.join(output_path, f"task_{job_id}.pdf"))
+
+        epochs = [min(enumerate(history[:, "valid_loss"], start=0), key=lambda x: x[1])[0]
+                  for history in histories]
 
         shutil.rmtree(temp_dir)
 
@@ -159,16 +135,21 @@ def process_experiment(
             "experiment": experiment_name,
             "mers": mers,
             "batch_size": batch_size,
-            # "epochs": statistics.mean(epoch_counts),
+            "epochs": epochs,
             "cross_validation_test_r2": list(results["test_score"]),
+            "cross_validation_train_r2": list(results["train_score"]),
             "cv_test_r2_mean": results["test_score"].mean(),
             "cv_test_r2_mean_std": results["test_score"].std(),
             "patience": patience,
+            "max_epochs": max_epochs,
             "kernel_widths": kernel_widths,
             "conv_filters": net_params["module__conv_filters"],
             "fc_node_count": net_params["module__fc_node_count"],
             "include_affinities": include_affinities,
             "max_pooling": pool,
+            "dropout": dropout_rate,
+            "decay": weight_decay,
+            "lr": lr,
         }
 
         with open(file_path, "r+") as f:
@@ -193,20 +174,32 @@ if __name__ == "__main__":
     parser.add_argument("kernel_widths", type=str, help="must be comma-separated with no spaces")
     parser.add_argument("include_affinities", type=str)
     parser.add_argument("pool", type=str)
-
+    parser.add_argument("dropout", type=float)
+    parser.add_argument("decay", type=float)
+    parser.add_argument("lr", type=float)
+    parser.add_argument("conv_filters", type=int)
+    parser.add_argument("fc_node_count", type=int)
     args = parser.parse_args()
 
-    job_id = args.job_id
-    output_path = args.output_path
-    data_config = args.data_config
-    experiment = args.experiment
-    num_layers = args.num_layers
-    mers = args.mers
-    batch_size = args.batch_size
     kernel_widths = [int(k) for k in args.kernel_widths.split(",")]
     include_affinities = bool(args.include_affinities.upper() in ("TRUE", "YES", "T", "Y"))
     pool = bool(args.pool.upper() in ("TRUE", "YES", "T", "Y"))
 
-    print(f"experiment: {experiment}, layers: {num_layers}, job_id:{job_id}")
-    process_experiment(job_id, output_path, data_config, experiment, num_layers,
-                       mers, batch_size, kernel_widths, include_affinities, pool)
+    print(f"experiment: {args.experiment}, layers: {args.num_layers}, job_id:{args.job_id}")
+    process_experiment(
+        args.job_id,
+        args.output_path,
+        args.data_config,
+        args.experiment,
+        args.num_layers,
+        args.mers,
+        args.batch_size,
+        kernel_widths,
+        include_affinities,
+        pool,
+        args.dropout,
+        args.decay,
+        args.lr,
+        args.conv_filters,
+        args.fc_node_count,
+    )

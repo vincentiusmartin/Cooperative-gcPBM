@@ -9,7 +9,7 @@ class NLayerCNN(nn.Module):
     argument.
     """
     def __init__(self, conv_filters, fc_node_count, kernel_widths, include_affinities=False,
-                 pool=False, mers=3):
+                 pool=False, mers=3, dropout=0):
         """Initialize the convolutional neural network.
 
         Args:
@@ -36,6 +36,7 @@ class NLayerCNN(nn.Module):
             nn.Sequential(
                 nn.ConstantPad1d(1, 1/(4**mers)),
                 nn.Conv1d(in_channels, conv_filters[0], kernel_widths[0]),
+                nn.Dropout(dropout),
                 nn.ReLU(),
             )
         ]
@@ -43,6 +44,7 @@ class NLayerCNN(nn.Module):
         for i in range(1, len(conv_filters)):
             params = [
                 nn.Conv1d(conv_filters[i-1], conv_filters[i], kernel_widths[i]),
+                nn.Dropout(dropout),
                 nn.ReLU()
             ]
 
@@ -70,6 +72,7 @@ class NLayerCNN(nn.Module):
 
         self.dense_layer = nn.Sequential(
             nn.Linear(fc_input_size, fc_node_count),
+            nn.Dropout(dropout),
             nn.ReLU(),
             nn.Linear(fc_node_count, 128),
             nn.ReLU(),

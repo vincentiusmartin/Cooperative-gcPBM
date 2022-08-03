@@ -32,12 +32,16 @@ def main():
         new_entry = deepcopy(json_list[0])
         del new_entry["cv_test_r2_mean"]
         del new_entry["cross_validation_test_r2"]
+        del new_entry["cross_validation_train_r2"]
         del new_entry["random_state"]
         new_entry["file_path"] = file_path
 
         new_entry["cv_r2_means"] = []
+        new_entry["cv_r2_train_means"] = []
         for entry in json_list:
             new_entry["cv_r2_means"].append(entry["cv_test_r2_mean"])
+            new_entry["cv_r2_train_means"].append(statistics.mean(
+                entry["cross_validation_train_r2"]))
 
         new_entry["cv_r2_mean"] = 0
         new_entry["cv_r2_mean_std"] = 0

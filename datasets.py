@@ -9,6 +9,21 @@ import torch
 from torch.nn import functional
 
 
+def get_dataframe(config_file, experiment_name):
+    with open(config_file, "r") as f:
+        exp_dict = json.load(f)
+
+    experiment = exp_dict[experiment_name]
+
+    # potentially consolidate these pairs of data files.
+    df_delta = pd.read_csv(os.path.join(exp_dict["path"], experiment["deltas_file"]))
+    dft = pd.read_csv(os.path.join(exp_dict["path"], experiment["input_data_file"]), sep="\t")
+
+    df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
+
+    return dft.merge(df_delta, on="Name")
+
+
 def get_datasets(experiment_name, data_config, include_affinities=True, mers=2):
     """Retrieve input features and target labels.
 
@@ -22,18 +37,7 @@ def get_datasets(experiment_name, data_config, include_affinities=True, mers=2):
         X: SliceDict containing input features
         y: pytorch.tensor containing target values
     """
-    with open(data_config, "r") as f:
-        exp_dict = json.load(f)
-
-    experiment = exp_dict[experiment_name]
-
-    # potentially consolidate these pairs of data files.
-    df_delta = pd.read_csv(os.path.join(exp_dict["path"], experiment["deltas_file"]))
-    dft = pd.read_csv(os.path.join(exp_dict["path"], experiment["input_data_file"]), sep="\t")
-
-    df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
-
-    dft = dft.merge(df_delta, on="Name")
+    dft = get_dataframe(data_config, experiment_name)
 
     # for ets1_ets1 experiments, only use data that was classified as cooperative
     if experiment_name == "ets1_ets1":
@@ -57,12 +61,8 @@ def get_datasets(experiment_name, data_config, include_affinities=True, mers=2):
                                     itertools.product(["A", "T", "C", "G"], repeat=mers))
                           }
 
-    def make_categorical(element):
-        return kmer_encoding_dict[element]
-
-    vectorized_make_categorical = np.vectorize(make_categorical)
-
     sequences = np.array(seqs)  # convert to np array
+    vectorized_make_categorical = np.vectorize(lambda element: kmer_encoding_dict[element])
     sequences = vectorized_make_categorical(sequences)  # encode nucleotides as integers
     sequences = torch.from_numpy(sequences)  # convert to torch tensor
     sequences = functional.one_hot(sequences)  # convert to one-hot encoding

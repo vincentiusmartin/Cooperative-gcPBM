@@ -1,7 +1,6 @@
 """This program is used by the SLURM job to get a bash array in which each element is a set of
 arguments for one run of 'train_and_evaluate.py`.
 """
-
 from copy import deepcopy
 import itertools
 import json
@@ -41,4 +40,4 @@ if __name__ == "__main__":
     if not len(sys.argv) > 2:
         print(" ".join(arg_set))
     else:
-        print(f"--array=0-{len(arg_list)-1}")
+        print(f"sbatch -p compsci-gpu --array=0-{len(arg_list)-1}%32 --gres=gpu:1 train_and_evaluate.sh {config_path} data-config.json")
