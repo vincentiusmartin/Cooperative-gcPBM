@@ -2,6 +2,31 @@ import os
 import unittest
 
 from experiment import process_experiment
+from networks import NLayerCNN
+
+
+class TestNetwork(unittest.TestCase):
+    def __init__(self, methodName):
+        super().__init__(methodName)
+
+        self.experiment_params = dict(
+            experiment_name="ets1_runx1",
+            num_layers=2,
+            mers=2,
+            batch_size=32,
+            kernel_widths=[4, 4],
+            include_affinities=False,
+            pool=False,
+            patience=10,
+            max_epochs=40,
+            debug=True,
+        )
+
+    def test_shape(self):
+        cnn = NLayerCNN(**self.experiment_params)
+        inputs = 1
+        output = cnn(inputs)
+        self.assertTrue(output)
 
 
 class TestExperiment(unittest.TestCase):
@@ -35,7 +60,7 @@ class TestExperiment(unittest.TestCase):
 
     def test_happy_path(self):
         """Test a happy path."""
-        self.files_to_remove += ["./output/task_1.json", "./output/task_1.pdf"]
+        # self.files_to_remove += ["./output/task_1.json", "./output/task_1.pdf"]
 
         process_experiment(job_id=1, **self.experiment_params)
 

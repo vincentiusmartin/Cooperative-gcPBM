@@ -14,6 +14,10 @@ import torch
 from datasets import get_datasets
 from networks import SkorchNeuralNetRegressor
 
+
+VALIDATION_SEEDS = (3516041783, 3216119440, 3762389666, 1456845046, 2131288841)
+TEST_SEEDS = (3454832692, 3917820095, 851603617, 432544541, 4162995973)
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"device: {device}")
 
@@ -62,6 +66,7 @@ def process_experiment(
         patience=50,
         max_epochs=200,
         debug=False,
+        test=False,
 ):
     net_params = {
         "device": device,
@@ -98,9 +103,9 @@ def process_experiment(
         f.write(json.dumps([]))
         f.write("\n")
 
+    SEEDS = TEST_SEEDS if test else VALIDATION_SEEDS
     # run five 5-fold cross-validations and take average to approximate R^2 on unseen data
-    for i, random_state in enumerate(
-            (3454832692, 3917820095, 851603617, 432544541, 4162995973)):
+    for i, random_state in enumerate(SEEDS):
         # Xs must be: {sequences: [], site1_score: [], site2_score: []}
         Xs, y = shuffle(Xs, y, random_state=random_state)
 
@@ -130,6 +135,7 @@ def process_experiment(
         shutil.rmtree(temp_dir)
 
         new_result = {
+            "random_seed": random_state,
             "random_state": i,
             "num_layers": num_layers,
             "experiment": experiment_name,
