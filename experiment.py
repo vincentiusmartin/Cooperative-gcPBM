@@ -65,8 +65,8 @@ def process_experiment(
         fc_node_count=512,
         patience=50,
         max_epochs=200,
-        debug=False,
         test=False,
+        debug=False,
 ):
     net_params = {
         "device": device,
@@ -185,27 +185,30 @@ if __name__ == "__main__":
     parser.add_argument("lr", type=float)
     parser.add_argument("conv_filters", type=int)
     parser.add_argument("fc_node_count", type=int)
+    parser.add_argument("test", type=str)
     args = parser.parse_args()
 
     kernel_widths = [int(k) for k in args.kernel_widths.split(",")]
     include_affinities = bool(args.include_affinities.upper() in ("TRUE", "YES", "T", "Y"))
     pool = bool(args.pool.upper() in ("TRUE", "YES", "T", "Y"))
+    test = bool(args.test.upper() in ("TRUE", "YES", "T", "Y"))
 
     print(f"experiment: {args.experiment}, layers: {args.num_layers}, job_id:{args.job_id}")
     process_experiment(
-        args.job_id,
-        args.output_path,
-        args.data_config,
-        args.experiment,
-        args.num_layers,
-        args.mers,
-        args.batch_size,
-        kernel_widths,
-        include_affinities,
-        pool,
-        args.dropout,
-        args.decay,
-        args.lr,
-        args.conv_filters,
-        args.fc_node_count,
+        job_id=args.job_id,
+        output_path=args.output_path,
+        data_config=args.data_config,
+        experiment_name=args.experiment,
+        num_layers=args.num_layers,
+        mers=args.mers,
+        batch_size=args.batch_size,
+        kernel_widths=kernel_widths,
+        include_affinities=include_affinities,
+        pool=pool,
+        dropout_rate=args.dropout,
+        weight_decay=args.decay,
+        lr=args.lr,
+        conv_filters=args.conv_filters,
+        fc_node_count=args.fc_node_count,
+        test=test,
     )
