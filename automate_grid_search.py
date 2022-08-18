@@ -19,6 +19,8 @@ from sklearn.utils import shuffle
 
 from chip2probe.modeler.cooptrain import CoopTrain
 
+PATH = "/Users/kylepinheiro/research_code/data"
+
 # define hyper-parameter grid
 models = {
     "random_forest_regression": {
@@ -36,7 +38,8 @@ models = {
         "class": SVR,
         "param_grid": [
             {
-                "regressor__regressor__C": [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64],
+                "regressor__regressor__C": [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32,
+                                            64],
                 "regressor__regressor__gamma": [.000001, .00001, .0001, .001, .01, .1, 1, 10],
                 "regressor__regressor__kernel": ["rbf"],
                 "regressor__regressor__epsilon": [0.015625, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2]
@@ -49,8 +52,8 @@ models = {
 experiment_dict = {
     "ets1_ets1":
     {
-        "labeled_data_path": "./data/lbled_o1_selected.csv",
-        "training_data_path": "./data/train_ets1_ets1.tsv",
+        "labeled_data_path": f"{PATH}/lbled_o1_selected.csv",
+        "training_data_path": f"{PATH}/train_ets1_ets1.tsv",
         "position_keys": ("site_str_pos", "site_wk_pos"),
         "feature_dict": {
             "distance": {"type": "numerical"},
@@ -71,8 +74,8 @@ experiment_dict = {
     },
     "ets1_runx1":
     {
-        "labeled_data_path": "./data/both_ori_plt_ets1_runx1.csv",
-        "training_data_path": "./data/train_ets1_runx1.tsv",
+        "labeled_data_path": f"{PATH}/both_ori_plt_ets1_runx1.csv",
+        "training_data_path": f"{PATH}/train_ets1_runx1.tsv",
         "position_keys": ("ets1_pos", "runx1_pos"),
         "feature_dict": {
             "distance": {"type": "numerical"},
@@ -131,7 +134,7 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
         regressor = TransformedTargetRegressor(regressor=pipeline, transformer=StandardScaler())
 
     grid_search = GridSearchCV(regressor, model_grid["param_grid"], cv=5,
-                               refit=True, n_jobs=-1, verbose=1)
+                               refit=True, n_jobs=-1, verbose=0)
     grid_search.fit(X, ytrue)
 
     params = grid_search.best_params_
@@ -149,8 +152,10 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
         else:
             new_params = {key.replace("regressor__regressor__", ""): value
                           for key, value in params.items()}
+            # standardize the input data before passing to SVR model
             pipeline = Pipeline(
                 [("scaler", StandardScaler()), ("regressor", model_grid["class"](**new_params))])
+            # TransformedTargetRegressor allows for transforming the target value.
             regressor = TransformedTargetRegressor(regressor=pipeline, transformer=StandardScaler())
 
         cv_results = cross_validate(regressor, X, ytrue, cv=5, scoring="r2", n_jobs=-1,
