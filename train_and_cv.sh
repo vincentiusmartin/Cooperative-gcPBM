@@ -23,12 +23,6 @@ feature_sets=(
 "distance,affinity,orientation"
 "distance,affinity,orientation,shape_in,shape_out"
 "distance,affinity,orientation,sequence_in,sequence_out"
-"position"
-"position,affinity"
-"position,orientation"
-"position,affinity,orientation"
-"position,affinity,orientation,shape_in,shape_out"
-"position,affinity,orientation,sequence_in,sequence_out"
 )
 
 
@@ -42,8 +36,8 @@ for model in "${models[@]}"; do
   done
 done
 
-#echo ${#args[@]}
+# echo ${#args[@]}
 
-# Use correct paths to appropriate python installation and python file
+# Ensure paths  to appropriate python installation and python file are correct
 srun python cooperativity-prediction/automate_grid_search.py \
 "${SLURM_ARRAY_TASK_ID}" "${outdir}" "${args[${SLURM_ARRAY_TASK_ID}]}"
