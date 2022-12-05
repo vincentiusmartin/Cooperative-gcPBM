@@ -1,0 +1,20 @@
+{
+  "experiments": ["ets1_ets1"],
+  "num_layers": [4],
+  "mers": [2],
+  "batch_size": [32],
+  "kernel_widths": [
+    [10],
+    [12],
+    [8],
+    [10]
+  ],
+  "include_affinities": [true],
+  "pool": [false],
+  "dropout": [0],
+  "decay": [0],
+  "lr": [0.0005],
+  "conv_filters": [64],
+  "fc_node_count": [512],
+  "test": [true]
+}

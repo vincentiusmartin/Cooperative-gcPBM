@@ -60,7 +60,7 @@ class TestExperiment(unittest.TestCase):
 
     def test_happy_path(self):
         """Test a happy path."""
-        # self.files_to_remove += ["./output/task_1.json", "./output/task_1.pdf"]
+        self.files_to_remove += ["./output/task_1.json", "./output/task_1.pdf"]
 
         process_experiment(job_id=1, **self.experiment_params)
 
