@@ -122,7 +122,6 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
         dft = dft.reset_index()
 
     model_grid = models[model]
-    # print(f"model: {model}, experiment: {experiment_name} feature_set: {feature_set}")
 
     X, ytrue = get_features(dft, feature_set, experiment)
     X, ytrue = shuffle(X, ytrue, random_state=1239283591)

@@ -8,8 +8,9 @@
 #SBATCH --mail-type=END
 #SBATCH --mail-user=<email here>
 
-outdir="" # specify path for data output (must already exist)
+outdir="" # specify path for data output
 
+mkdir -p outdir
 models=("support_vector_regression"  "random_forest_regression")
 
 experiments=("ets1_ets1" "ets1_runx1")
@@ -38,6 +39,6 @@ done
 
 # echo ${#args[@]}
 
-# Ensure paths  to appropriate python installation and python file are correct
+# Ensure path to appropriate python installation and python file are correct
 srun python cooperativity-prediction/automate_grid_search.py \
 "${SLURM_ARRAY_TASK_ID}" "${outdir}" "${args[${SLURM_ARRAY_TASK_ID}]}"
