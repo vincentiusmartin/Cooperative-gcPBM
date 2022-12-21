@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from skorch import NeuralNetRegressor
+import skorch
 
 
 class NLayerCNN(nn.Module):
@@ -19,7 +19,7 @@ class NLayerCNN(nn.Module):
         fc_node_count: This specifies the number of nodes in the first fully-connected layer.
         kernel_widths: This list specifies the size of the filters for the kernels at each layer.
         The size of the neural network is determined by the length of the kernel_widths argument.
-        include_affinities: whether or not to include affinities.
+        include_affinities: whether to include affinities.
         pool: whether to apply max pooling after all layers (except first).
         mers: number of mers.
         """
@@ -93,7 +93,7 @@ class NLayerCNN(nn.Module):
         return X
 
 
-class SkorchNeuralNetRegressor(NeuralNetRegressor):
+class SkorchNeuralNetRegressor(skorch.NeuralNetRegressor):
     """Override 'fit' to re-expand to 2 dimensions, as skorch requires.
     This is necessary because TransformedTargetRegressor reduces target tensor to 1 dimension.
     """

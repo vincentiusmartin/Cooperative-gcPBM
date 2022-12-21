@@ -1,19 +1,24 @@
-## Random Forest Regression and Supprt Vector Regression for the prediction of cooperativity
-Predicting transcription factor cooperativity from DNA sequences
+## Random Forest Regression and Support Vector Regression
+Predicting transcription factor cooperativity from DNA sequences.
 
-### Overview
-Within the study of gene regulation, there is an insufficient understanding of cooperative binding
-of transcription factors (TFs). Based on results from genomic-context protein binding microarray 
-(gc-PBM, or just PBM) data, we trained models to quantitatively predict the binding level of a
-given DNA sequences. The repository contains attempts to accomplish this regression task via two 
-classical machine learning approaches: Random Forest Regression and Support Vector Regression.
+### To Run
+On SLURM:
+`sbatch train_and_cv.sh <output directory path> <data config file path>`
+- output directory path: path to output results
+- data config file path: path to a `.json` file containing paths to data (see `data-config.json`
+for example).
+This allows for a variety of grid searches with different feature sets to be executed 
+simultaneously.
 
-### Random Forest Regression
+An experiment may be run without SLURM using the following command:
+` python automate_grid_search.py <job_id> <outputpath> <ets1_ets1|ets1_runx1>
+<random_forest_regression|support_vector_regression> <feature_1>,<feature_2>,...,<feature_n>`
+- job_id: arbitrary ID #, primarily for use in a SLURM job
+- output path: path to output results
+- experiment dataset: Either "ets1_ets1" or "ets1_runx1"
+- model: either "random_forest_regression" or "support_vector_regression"
+- feature list: comma separated list of features to include. See "feature_sets" in
+`train_and_cv.sh` for examples. Eg. `distance,affinity,orientation`.
 
-### Support Vector Regression
-
-### Cross-Validation and Hyper-parameter search
-
-### Further Reading
-Refer to the dl_cooperativity repository, which contains models we found to attain higher accuracy 
-than any of the classical ML approaches discussed here.
+`automate_grid_search.py` runs a grid search with one feature set. The values of the grid search
+are defined within the script.

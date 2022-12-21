@@ -42,6 +42,10 @@ def plot_loss_curves(train_series, validate_series, file_name=None):
 
 
 class CustomPrefixCheckpoint(skorch.callbacks.Checkpoint):
+    """This class redefines 'initialize' method to ensures that each Checkpoint object has a unique
+     filename prefix. This prevents co-existing Checkpoint objects from overwriting one another's
+     checkpoint files.
+    """
     def initialize(self):
         self.fn_prefix = str(id(self))
         return super(CustomPrefixCheckpoint, self).initialize()
@@ -89,8 +93,8 @@ def process_experiment(
     datasets = get_datasets(experiment_name, data_config=data_config,
                             include_affinities=include_affinities, mers=mers)
     temp_dir = f"./output/{job_id}_temp"
-    random_state = 1239283591
 
+    random_state = 1239283591
     datasets = shuffle(*datasets, random_state=random_state)
     Xs, y = datasets
 
@@ -134,6 +138,7 @@ def process_experiment(
 
         shutil.rmtree(temp_dir)
 
+        # prepare a result dictionary to write as a json object to write to results file
         new_result = {
             "random_seed": random_state,
             "random_state": i,

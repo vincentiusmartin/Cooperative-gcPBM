@@ -5,22 +5,23 @@
 # <data config file>
 #
 # SLURM parameters:
-#SBATCH --exclude=linux[41-60]
 #SBATCH --mail-type=END
 
 gridsearch_config=$1
 data_config=$2
 
+# make output directory if it does not already exist
 outdir="$HOME/id_${SLURM_ARRAY_JOB_ID}"
 mkdir -p "$outdir"
 
+# copy the search grid into the output directory so we know what search produced these results
 cp "$gridsearch_config" "$outdir/search-config.json"
 
+# use "retrieve_grid_array" script to get arguments for model training experiment
 args=()
-IFS=";" read -r -a args <<< "$(/home/users/kap52/miniconda3/envs/dl_cooperativity/bin/python \
- ./retrieve_grid_array.py "$outdir/search-config.json")"
+IFS=";" read -r -a args <<< "$(python ./retrieve_grid_array.py "$outdir/search-config.json")"
 
 echo "${args[${SLURM_ARRAY_TASK_ID}]}"
-#  path to appropriate python environment should be inserted
-srun /home/users/kap52/miniconda3/envs/dl_cooperativity/bin/python ./experiment.py \
+
+srun python ./experiment.py \
 "${SLURM_ARRAY_TASK_ID}" "${outdir}" "${data_config}" ${args[${SLURM_ARRAY_TASK_ID}]}

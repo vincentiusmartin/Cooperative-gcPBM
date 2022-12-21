@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# this code was originally authored by: Vincentius Martin: vincentius.martin@duke.edu
-# modified substantially by: Kyle Pinheiro: kyle.pinheiro@duke.edu
 import json
 import os
 import sys
@@ -17,9 +15,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
-from chip2probe.modeler.cooptrain import CoopTrain
-
-PATH = "/Users/kylepinheiro/research_code/data"
+from coopgcpbm.modeler.cooptrain import CoopTrain
 
 # define hyper-parameter grid
 models = {
@@ -52,8 +48,6 @@ models = {
 experiment_dict = {
     "ets1_ets1":
     {
-        "labeled_data_path": f"{PATH}/lbled_o1_selected.csv",
-        "training_data_path": f"{PATH}/train_ets1_ets1.tsv",
         "position_keys": ("site_str_pos", "site_wk_pos"),
         "feature_dict": {
             "distance": {"type": "numerical"},
@@ -74,8 +68,6 @@ experiment_dict = {
     },
     "ets1_runx1":
     {
-        "labeled_data_path": f"{PATH}/both_ori_plt_ets1_runx1.csv",
-        "training_data_path": f"{PATH}/train_ets1_runx1.tsv",
         "position_keys": ("ets1_pos", "runx1_pos"),
         "feature_dict": {
             "distance": {"type": "numerical"},
@@ -141,7 +133,7 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
     with open(file_path, "w") as f:
         f.write(json.dumps([]))
 
-    # do 5 cross-validations so we can aggregate data across more than one replication of
+    # do 5 cross-validations, so we can aggregate data across more than one replication of
     # cross-validation (random seeds were randomly-generated)
     for rand_state in (3454832692, 3917820095, 851603617, 432544541, 4162995973):
         X, ytrue = shuffle(X, ytrue, random_state=rand_state)
@@ -189,13 +181,23 @@ if __name__ == "__main__":
     # <feature_1>,<feature_2>,...,<feature_n>
     print(sys.argv)
     job_id = sys.argv[1]
-    path = sys.argv[2]
-    experiment = sys.argv[3]
-    model = sys.argv[4]
-    feature_set = sys.argv[5].split(",")
+    output_path = sys.argv[2]
+    data_config_path = sys.argv[3]
+    experiment = sys.argv[4]
+    model = sys.argv[5]
+    feature_set = sys.argv[6].split(",")
 
     # results will be placed in file with unique name by job id
-    file_path = os.path.join(path, f"task_{job_id}.json")
+    output_file_path = os.path.join(output_path, f"task_{job_id}.json")
+
+    with open(data_config_path, "r+") as f:
+        data_paths = json.load(f)
+
+    for m in ("ets1_ets1", "ets1_runx1"):
+        for n in ("labeled_data_path", "training_data_path"):
+            data_paths[m][n] = os.path.join(data_paths["path"], data_paths[m][n])
+
+        experiment_dict[m].update(data_paths[m])
 
     print(f"experiment: {experiment}, model: {model}, feature_set: {feature_set}, job_id:{job_id}")
-    process_experiment_feature_set_model(experiment, feature_set, model, file_path)
+    process_experiment_feature_set_model(experiment, feature_set, model, output_file_path)

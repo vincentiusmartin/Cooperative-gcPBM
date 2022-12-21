@@ -1,14 +1,15 @@
 #!/bin/bash
 #
 #
-# TO RUN: sbatch train_and_cv.sh
+# TO RUN: sbatch train_and_cv.sh <output directory path> <data config file path>
 
 # the end value must be equal to one less than the number of runs
-#SBATCH --array=0-55%16
+#SBATCH --array=0-55
 #SBATCH --mail-type=END
 #SBATCH --mail-user=<email here>
 
-outdir="" # specify path for data output
+output_dir=$1  # specify path for data output
+data_config_path=$2
 
 mkdir -p outdir
 models=("support_vector_regression"  "random_forest_regression")
@@ -41,4 +42,4 @@ done
 
 # Ensure path to appropriate python installation and python file are correct
 srun python cooperativity-prediction/automate_grid_search.py \
-"${SLURM_ARRAY_TASK_ID}" "${outdir}" "${args[${SLURM_ARRAY_TASK_ID}]}"
+"${SLURM_ARRAY_TASK_ID}" "${output_dir}" "${data_config_path}" "${args[${SLURM_ARRAY_TASK_ID}]}"
