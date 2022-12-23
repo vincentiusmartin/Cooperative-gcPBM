@@ -1,0 +1,11 @@
+.idea
+__pycache__
+task_*.json
+.pt
+.pdf
+.ipynb
+
+misc_analysis
+data
+output
+tests/output
