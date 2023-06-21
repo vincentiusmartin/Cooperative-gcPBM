@@ -4,7 +4,7 @@ import pandas as pd
 
 import coopgcpbm.modeler.plotlib as plot
 import coopgcpbm.traingen as tg
-from sitespredict.pwm import PWM
+from coopgcpbm.sitespredict.pwm import PWM
 
 
 def predict_strength(train, pred, tfname, flanklen=0):
