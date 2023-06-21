@@ -9,9 +9,9 @@ import pandas as pd
 import sys
 import importlib
 
-from chip2probe.util import util
-from chip2probe.util import bio
-from chip2probe.modeler.features import *
+from coopgcpbm.util import util
+from coopgcpbm.util import bio
+from coopgcpbm.modeler.features import *
 
 class CoopTrain:
     def __init__(self, trainingdata, corelen=0, sep="\t", flip_th=False,
@@ -119,7 +119,7 @@ class CoopTrain:
             feature_dict
         """
 
-        module = importlib.import_module("chip2probe.modeler.features.%s" % feature)
+        module = importlib.import_module("coopgcpbm.modeler.features.%s" % feature)
         class_ = getattr(module, feature.capitalize())
         instance = class_(self.df, params)
         return instance.get_feature(seqcolname=self.seqcolname)
@@ -129,7 +129,7 @@ class CoopTrain:
         Get all feature based on feature dict
 
         Accepts a dictionary of feature name and parameters relative to the feature.
-        All features are from the ``chip2probe.modeler.features`` package. If more
+        All features are from the ``coopgcpbm.modeler.features`` package. If more
         than one of the same feature are needed, then add description to the name
         separated by underscore (e.g. shape_in, shape_out)
 

@@ -6,7 +6,7 @@ Created on Jul 16, 2019
 
 import abc
 import pandas as pd
-from chip2probe.util import bio as bio
+from coopgcpbm.util import bio as bio
 
 class BaseModel(abc.ABC):
     '''

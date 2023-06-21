@@ -5,8 +5,8 @@ Created on Jul 22, 2019
 
 Authors: Vincentius Martin, Farica Zhuang
 """
-from chip2probe.sitespredict import basepred, basemodel
-from chip2probe.util import bio as bio
+from coopgcpbm.sitespredict import basepred, basemodel
+from coopgcpbm.util import bio as bio
 import pandas as pd
 
 class PBMEscore(basemodel.BaseModel):

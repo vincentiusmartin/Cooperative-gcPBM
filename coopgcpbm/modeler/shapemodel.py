@@ -1,5 +1,5 @@
 import pickle
-from chip2probe.modeler.cooptrain import CoopTrain
+from coopgcpbm.modeler.cooptrain import CoopTrain
 import pandas as pd
 
 class ShapeModel:

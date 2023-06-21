@@ -1,7 +1,7 @@
 import pandas as pd
 
-from chip2probe.util import bio
-from chip2probe.modeler.features import basefeature
+from coopgcpbm.util import bio
+from coopgcpbm.modeler.features import basefeature
 
 
 class Orientation(basefeature.BaseFeature):

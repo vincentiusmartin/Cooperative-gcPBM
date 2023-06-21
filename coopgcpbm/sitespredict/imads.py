@@ -7,10 +7,10 @@ Authors: Vincentius Martin, Farica Zhuang
 '''
 
 
-import chip2probe.sitespredict.basepred as basepred
-import chip2probe.sitespredict.basemodel as basemodel
-import chip2probe.sitespredict.imadsmodel as imadsmodel
-from chip2probe.util import bio as bio
+import coopgcpbm.sitespredict.basepred as basepred
+import coopgcpbm.sitespredict.basemodel as basemodel
+import coopgcpbm.sitespredict.imadsmodel as imadsmodel
+from coopgcpbm.util import bio as bio
 import itertools
 import math
 import matplotlib.patches as patches

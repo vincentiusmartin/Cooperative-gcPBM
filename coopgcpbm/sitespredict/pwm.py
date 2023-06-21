@@ -5,8 +5,8 @@ Authors: Vincentius Martin
 import numpy as np
 import matplotlib.patches as patches
 
-from chip2probe.sitespredict import basepred, basemodel
-from chip2probe.util import bio as bio
+from coopgcpbm.sitespredict import basepred, basemodel
+from coopgcpbm.util import bio as bio
 
 """
 Some start end data:

@@ -13,9 +13,9 @@ import seaborn as sns
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
 
-from chip2probe.util import bio
-from chip2probe.util import stats as st
-from chip2probe.util import util
+from coopgcpbm.util import bio
+from coopgcpbm.util import stats as st
+from coopgcpbm.util import util
 
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 

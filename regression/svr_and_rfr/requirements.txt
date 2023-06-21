@@ -1,5 +1,3 @@
-cffi==1.14.6
--e git+https://github.com/vincentiusmartin/chip2probe.git@318a721c129d5f6cfa3cbcf30c6f1725f0bb2735#egg=chip2probe
 cycler==0.10.0
 Jinja2==3.0.1
 joblib==1.0.1

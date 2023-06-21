@@ -1,5 +1,5 @@
-from chip2probe.modeler.features import basefeature
-import chip2probe.util.bio as bio
+from coopgcpbm.modeler.features import basefeature
+import coopgcpbm.util.bio as bio
 import itertools
 
 import numpy as np

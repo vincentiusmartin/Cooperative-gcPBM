@@ -1,5 +1,5 @@
-from chip2probe.util import bio as bio
-from chip2probe.sitespredict import basepred, basemodel
+from coopgcpbm.util import bio as bio
+from coopgcpbm.sitespredict import basepred, basemodel
 import matplotlib.patches as patches
 
 class KompasPWM(basemodel.BaseModel):

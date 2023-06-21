@@ -16,7 +16,7 @@ import scipy
 from decimal import Decimal
 import os
 from sklearn import model_selection, metrics
-import chip2probe.util.stats as st
+import coopgcpbm.util.stats as st
 
 def plot_stacked_categories(df, x, y="label", path="stackedbar.png",
                            ratio=False, legend=True, title="", figsize=None, color=None):

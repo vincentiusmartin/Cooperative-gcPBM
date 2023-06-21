@@ -1,12 +1,11 @@
-from chip2probe.modeler.features import basefeature
-import chip2probe.util.bio as bio
-import chip2probe.modeler.dnashape as ds
 import string, random
 import math
-
-from chip2probe.modeler.features.orientation import Orientation
-
 import numpy as np
+
+from coopgcpbm.modeler.features.orientation import Orientation
+from coopgcpbm.modeler.features import basefeature
+import coopgcpbm.util.bio as bio
+import coopgcpbm.modeler.dnashape as ds
 
 class Shape(basefeature.BaseFeature):
     def __init__(self, traindf, params):

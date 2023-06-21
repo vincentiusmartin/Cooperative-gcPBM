@@ -1,6 +1,7 @@
 import pandas as pd
-from chip2probe.util import bio
 from operator import itemgetter
+
+from coopgcpbm.util import bio
 
 def pred_komp_pwm(seq, kompas, pwm):
     pred = kompas.predict_sequence(seq)

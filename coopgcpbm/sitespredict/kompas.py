@@ -1,6 +1,6 @@
 import pandas as pd
-from chip2probe.sitespredict import basepred, basemodel
-from chip2probe.util import bio as bio
+from coopgcpbm.sitespredict import basepred, basemodel
+from coopgcpbm.util import bio as bio
 import itertools
 import math
 import matplotlib.patches as patches

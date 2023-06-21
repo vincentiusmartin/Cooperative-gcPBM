@@ -1,5 +1,5 @@
 
-from chip2probe.modeler.features import basefeature
+from coopgcpbm.modeler.features import basefeature
 
 class Affinity(basefeature.BaseFeature):
     def __init__(self, traindf, params):

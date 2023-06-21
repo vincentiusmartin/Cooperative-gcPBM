@@ -7,13 +7,12 @@ Created on May, 2020
     should not be changed.
 '''
 
-# 1. minimum distance??
-
-from chip2probe.util import bio
 import pandas as pd
 import math
-import chip2probe.util.coopgeneral as cg
-import chip2probe.training_gen.traingen as tg
+
+from coopgcpbm.util import bio
+import coopgcpbm.util.coopgeneral as cg
+import coopgcpbm.training_gen.traingen as tg
 
 def makeseqdict(seq, id, preds, type, comment):
     return {"id":id,

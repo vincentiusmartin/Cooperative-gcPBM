@@ -9,10 +9,11 @@ from sitespredict.imads import iMADS
 from sitespredict.imadsmodel import iMADSModel
 from sitespredict.pwm import PWM
 from sitespredict.kompas import Kompas
+from coopgcpbm.modeler.cooptrain import CoopTrain
 
-from util import bio
+from coopgcpbm.util import bio
 
-from chip2probe.modeler.cooptrain import CoopTrain
+
 
 def get_sites_pos(df, kompas, pwm, seqcol="Sequence"):
     """
@@ -76,7 +77,7 @@ if __name__ == "__main__":
     pwm_ets = PWM(args.pwmpath, log=True)
     kompas_ets = Kompas(args.kmeralign,
                     core_start = 11, core_end = 15, core_center = 12)
-                    
+
     df = pd.read_csv(args.path).drop_duplicates()
     df = df[(df["label"] == "cooperative") | (df["label"] == "independent")]
     train = gen_training(df, pwm_ets, kompas_ets).drop_duplicates(["Sequence"])
