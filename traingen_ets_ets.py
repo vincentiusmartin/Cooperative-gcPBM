@@ -85,9 +85,7 @@ if __name__ == "__main__":
     print(train["label"].value_counts())
     train.to_csv("train_ets1_ets1.tsv", index=False, sep="\t")
 
-    """
     train.rename(columns={'site_str_score': 'Binding strength of the stronger site', 'site_wk_score': 'Binding strength of the weaker site'}, inplace=True)
     pl.plot_stacked_categories(train, "distance", path="distance_bar.png", title="Distance distribution", ratio=True, figsize=(17,4), color = ["#b22222","#FFA07A"])
     pl.plot_stacked_categories(train, "orientation", path="ori_bar.png", title="Relative sites orientation\ndistribution", ratio=True, figsize=(9,5), color = ["#b22222","#FFA07A"])
     pl.plot_box_categories(train, path="boxplot.png", incols=["Binding strength of the stronger site", "Binding strength of the weaker site"], alternative="smaller", color = ["#b22222","#FFA07A"])
-    """
