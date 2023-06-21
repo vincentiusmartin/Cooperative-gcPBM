@@ -11,6 +11,14 @@ Make sure that you have R in your path in order to install and import rpy2
 
 To install R in MacOS, run `brew install R`
 
+Optionally, before installing the requirements, create a virtual environment
+
+`python3.9 venv coop-gcpbm-venv`
+
+Activate the virtual environment
+
+`source coop-gcpbm-venv/bin/activate`
+
 Then run `pip install -r requirements.txt`
 
 ## Generate clean probe files
