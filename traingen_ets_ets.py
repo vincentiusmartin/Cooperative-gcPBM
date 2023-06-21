@@ -5,10 +5,10 @@ from coopgcpbm.modeler.cooptrain import CoopTrain
 import coopgcpbm.traingen as tg
 import coopgcpbm.modeler.plotlib as pl
 
-from sitespredict.imads import iMADS
-from sitespredict.imadsmodel import iMADSModel
-from sitespredict.pwm import PWM
-from sitespredict.kompas import Kompas
+from coopgcpbm.sitespredict.imads import iMADS
+from coopgcpbm.sitespredict.imadsmodel import iMADSModel
+from coopgcpbm.sitespredict.pwm import PWM
+from coopgcpbm.sitespredict.kompas import Kompas
 from coopgcpbm.modeler.cooptrain import CoopTrain
 
 from coopgcpbm.util import bio
@@ -60,7 +60,7 @@ def get_sites_pos(df, kompas, pwm, seqcol="Sequence"):
 def gen_training(df, pwm, kompas):
     train = get_sites_pos(df, kompas, pwm)
     # reverse -- to ++
-    train00 = train[train["orientation"] == "-/-"][["Name","Sequence","label"]]
+    train00 = train[train["orientation"] == "-/-"][["Name","Sequence","label","p_o1","label_o1","p_o2","label_o2"]]
     train00["Sequence"] = train00["Sequence"].apply(lambda x: bio.revcompstr(x))
     train00 = get_sites_pos(train00, kompas, pwm)
     train = pd.concat([train[train["orientation"] != "-/-"], train00])
@@ -85,7 +85,9 @@ if __name__ == "__main__":
     print(train["label"].value_counts())
     train.to_csv("train_ets1_ets1.tsv", index=False, sep="\t")
 
+    """
     train.rename(columns={'site_str_score': 'Binding strength of the stronger site', 'site_wk_score': 'Binding strength of the weaker site'}, inplace=True)
     pl.plot_stacked_categories(train, "distance", path="distance_bar.png", title="Distance distribution", ratio=True, figsize=(17,4), color = ["#b22222","#FFA07A"])
     pl.plot_stacked_categories(train, "orientation", path="ori_bar.png", title="Relative sites orientation\ndistribution", ratio=True, figsize=(9,5), color = ["#b22222","#FFA07A"])
     pl.plot_box_categories(train, path="boxplot.png", incols=["Binding strength of the stronger site", "Binding strength of the weaker site"], alternative="smaller", color = ["#b22222","#FFA07A"])
+    """
