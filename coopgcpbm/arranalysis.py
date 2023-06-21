@@ -8,7 +8,7 @@ import itertools
 import statsmodels.stats.multitest as sm
 import os
 
-import coopgcpbm.util.stats_r as st
+import coopgcpbm.util.stats as st
 
 def read_chamber_file(path, includekey, excludekey=None, keycol="Name", seqcols=["Name","type","ori","rep"], negcols=["Name","ori","rep"],
                      negkey="NegativeCtrl", include_id=False):
