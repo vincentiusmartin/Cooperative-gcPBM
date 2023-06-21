@@ -5,10 +5,10 @@ from coopgcpbm.modeler.cooptrain import CoopTrain
 import coopgcpbm.traingen as tg
 import coopgcpbm.modeler.plotlib as pl
 
-from sitespredict.imads import iMADS
-from sitespredict.imadsmodel import iMADSModel
-from sitespredict.pwm import PWM
-from sitespredict.kompas import Kompas
+from coopgcpbm.sitespredict.imads import iMADS
+from coopgcpbm.sitespredict.imadsmodel import iMADSModel
+from coopgcpbm.sitespredict.pwm import PWM
+from coopgcpbm.sitespredict.kompas import Kompas
 from coopgcpbm.modeler.cooptrain import CoopTrain
 
 from coopgcpbm.util import bio
