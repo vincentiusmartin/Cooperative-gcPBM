@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
-import coopgcpbm.util.stats_r as st
+import coopgcpbm.util.stats as st
 import coopgcpbm.arranalysis as arr
 
 def assign_label(l1, l2):

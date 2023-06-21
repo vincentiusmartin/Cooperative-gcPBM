@@ -3,6 +3,16 @@ The pipeline for analyzing cooperative genomic context protein binding microarra
 
 All input and processed files, including figures, are available in: https://duke.box.com/s/cnbo6gjg223mtdun3cnemycwep414wgd
 
+## Install requirements
+
+Python version >= 3.6.0
+
+Make sure that you have R in your path in order to install and import rpy2
+
+To install R in MacOS, run `brew install R`
+
+Then run `pip install -r requirements.txt`
+
 ## Generate clean probe files
 Code: `clean_file.py`
 

@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-import util.stats_r as st
-from sitespredict.kompas import Kompas
+import coopgcpbm.util.stats as st
+from coopgcpbm.sitespredict.kompas import Kompas
 import coopgcpbm.arranalysis as arr
 
 # =======

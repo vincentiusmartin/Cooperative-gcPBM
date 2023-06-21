@@ -6,7 +6,7 @@ import argparse
 import os
 
 import coopgcpbm.modeler.dnashape as ds
-from util import bio
+from coopgcpbm.util import bio
 
 def align(seq, move):
     """
