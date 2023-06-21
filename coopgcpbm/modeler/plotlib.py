@@ -63,7 +63,7 @@ def plot_stacked_categories(df, x, y="label", path="stackedbar.png",
     plt.savefig(path)
     plt.clf()
 
-def plot_box_categories(df, by=["label"], incols="default", path="boxplot.png", alternative="greater", color=None):
+def plot_box_categories(df, by=["label"], incols="default", path=None, alternative="greater", color=None):
     """
     Make boxplot.
 
@@ -141,12 +141,15 @@ def plot_box_categories(df, by=["label"], incols="default", path="boxplot.png", 
         #cur_ax.set_ylim(top=ylim)
     for d in range(len(cols),numrow*numcol):
         fig.delaxes(ax.flatten()[d])
-    plt.savefig(path, figsize=(8,4))
-    plt.clf()
-    # also write the log file
-    basepath = os.path.splitext(path)[0]
-    with open("%s.log" % basepath, 'w') as f:
-        f.write(logstr)
+    if path != None:
+        plt.savefig(path, figsize=(8,4))
+        plt.clf()
+        # also write the log file
+        basepath = os.path.splitext(path)[0]
+        with open("%s.log" % basepath, 'w') as f:
+            f.write(logstr)
+    else:
+        return ax
 
 def display_output(xy, score_dict, path, title, score_type="auc", varyline=False, max_x=1):
     """

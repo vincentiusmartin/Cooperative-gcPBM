@@ -14,7 +14,6 @@ from coopgcpbm.modeler.cooptrain import CoopTrain
 from coopgcpbm.util import bio
 
 
-
 def get_sites_pos(df, kompas, pwm, seqcol="Sequence"):
     """
     Get site position for each sequence
