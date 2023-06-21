@@ -1,6 +1,8 @@
 .DS_Store
 __pycache__
+.ipynb_checkpoints
 
 data/analysis_files
 data/probe_files
 data/sitemodels
+
