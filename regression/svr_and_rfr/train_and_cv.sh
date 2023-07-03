@@ -11,7 +11,7 @@
 output_dir=$1  # specify path for data output
 data_config_path=$2
 
-mkdir -p outdir
+mkdir -p "$output_dir"
 models=("support_vector_regression"  "random_forest_regression")
 
 experiments=("ets1_ets1" "ets1_runx1")
