@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 import coopgcpbm.util.stats as st
 from coopgcpbm.sitespredict.kompas import Kompas
@@ -105,6 +106,7 @@ if __name__ == "__main__":
     # Note: m for main TF, mc for main and cooperator TF
 
     # ============ ETS1-RUNX1 ============
+    # outdir = "data/analysis_files/ETS1_RUNX1/labeled"
     # ch_x =  "Ets1"
     # ch_y = "Ets1 + Runx1"
     # both_title = "Cooperative vs independent binding of Ets1-Runx1"
@@ -115,6 +117,7 @@ if __name__ == "__main__":
     # colors = ["#b22222","#FFA07A"]
 
     # ============ RUNX1-ETS1 ============
+    outdir = "data/analysis_files/RUNX1_ETS1/labeled"
     ch_x =  "Runx1"
     ch_y = "Runx1 + Ets1"
     both_title = "Cooperative vs independent binding of Runx1-Ets1"
@@ -123,6 +126,9 @@ if __name__ == "__main__":
     df_m, neg_m = pd.read_csv("data/probe_files/clean/RUNX1_only_pr_clean.csv"), pd.read_csv("data/probe_files/clean/RUNX1_only_neg_clean.csv")
     df_mc, neg_mc = pd.read_csv("data/probe_files/clean/RUNX1_ETS1_pr_clean.csv"), pd.read_csv("data/probe_files/clean/RUNX1_ETS1_neg_clean.csv")
     colors = ["#0343df","#75bbfd"]
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     oricoop = "er" if cooptf == "ets1" else "re"
 
@@ -147,10 +153,10 @@ if __name__ == "__main__":
     df_mc["intensity"] = (df_mc["intensity"] - intercept)/slope
 
     # Need to save this to avoid computing time in the subsequent process
-    df_m.to_csv("%s_%s_main.csv" % (maintf, cooptf),index=False)
-    df_mc.to_csv("%s_%s_main_cooperator.csv" % (maintf, cooptf),index=False)
-    df_m = pd.read_csv("%s_%s_main.csv" % ( maintf, cooptf))
-    df_mc = pd.read_csv("%s_%s_main_cooperator.csv" % ( maintf, cooptf))
+    df_m.to_csv(os.path.join(outdir, "%s_%s_main.csv" % (maintf, cooptf)),index=False)
+    df_mc.to_csv(os.path.join(outdir, "%s_%s_main_cooperator.csv" % (maintf, cooptf)),index=False)
+    df_m = pd.read_csv(os.path.join(outdir, "%s_%s_main.csv" % ( maintf, cooptf)))
+    df_mc = pd.read_csv(os.path.join(outdir, "%s_%s_main_cooperator.csv" % ( maintf, cooptf)))
 
     olist = []
     for ori in ["er","re"]:
@@ -212,10 +218,10 @@ if __name__ == "__main__":
     print("Number of distinct names, above cutoff, after orientation joining %d" % both_ori[both_ori["label"] != "below_cutoff"]["Name"].nunique())
 
     both_ori_plt = both_ori[["Name","intensity_x","intensity_y","unnormalized_intensity","label"]]
-    both_ori_plt[both_ori_plt["label"] != "below_cutoff"].sort_values("Name").to_csv("both_ori_plt_%s_%s.csv" % (maintf,cooptf),index=False)
+    both_ori_plt[both_ori_plt["label"] != "below_cutoff"].sort_values("Name").to_csv(os.path.join(outdir, "both_ori_plt_%s_%s.csv" % (maintf,cooptf)),index=False)
 
-    both_ori_plt = pd.read_csv("both_ori_plt_%s_%s.csv" % (maintf,cooptf))
-    arr.plot_classified_labels(both_ori_plt, path="normalized_%s_%s.pdf" % (maintf,cooptf), col1="intensity_x", col2="intensity_y",
+    both_ori_plt = pd.read_csv(os.path.join(outdir, "both_ori_plt_%s_%s.csv" % (maintf,cooptf)))
+    arr.plot_classified_labels(both_ori_plt, path=os.path.join(outdir, "normalized_%s_%s.pdf" % (maintf,cooptf)), col1="intensity_x", col2="intensity_y",
             title=both_title, xlab=ch_x, ylab=ch_y, plotnonsignif=False, labelnames=["cooperative","independent","anticoop"], colors=colors, showlog=True)
 
     # we use sequence where ets1 is on the left for simplicity
@@ -224,7 +230,7 @@ if __name__ == "__main__":
     seq_er_intensity = both_ori_plt[both_ori_plt["label"] != "below_cutoff"].merge(nmsqmap, on="Name")[["Sequence","intensity_x","intensity_y","unnormalized_intensity","label"]] \
              .rename(columns={'intensity_x':ch_x, "unnormalized_intensity": "%s_unnormalized"%ch_y, "intensity_y":"%s_normalized"%ch_y}) \
              .drop_duplicates("Sequence")
-    seq_er_intensity.to_csv("seq_%s_%s_intensity.csv" % (maintf,cooptf),index=False)
+    seq_er_intensity.to_csv(os.path.join(outdir, "seq_%s_%s_intensity.csv" % (maintf,cooptf)),index=False)
 
     print("Count per label",seq_er_intensity[["label","Sequence"]].groupby("label").count())
 
@@ -232,4 +238,4 @@ if __name__ == "__main__":
     all_labeled = name_info.merge(both_ori_plt[["Name","label"]], on="Name")
     all_labeled = all_labeled[all_labeled["label"] != "below_cutoff"].drop_duplicates("Sequence")
     all_labeled["distance"] = abs(all_labeled["%s_pos" % maintf] - all_labeled["%s_pos" % cooptf])
-    all_labeled.to_csv("%s_%s_seqlbled.tsv" % (maintf,cooptf), sep="\t", index=False, columns=["Name", "Sequence", "%s_pos" % maintf, "%s_start" % maintf, "%s_pos" % cooptf, "%s_start" % cooptf, "distance", "ori", "label"])
+    all_labeled.to_csv(os.path.join(outdir, "%s_%s_seqlbled.tsv" % (maintf,cooptf)), sep="\t", index=False, columns=["Name", "Sequence", "%s_pos" % maintf, "%s_start" % maintf, "%s_pos" % cooptf, "%s_start" % cooptf, "distance", "ori", "label"])

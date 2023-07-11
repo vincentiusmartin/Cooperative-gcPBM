@@ -16,8 +16,12 @@ if __name__ == "__main__":
     parser.add_argument('-b', '--s2', action="store", dest="s2", type=str,  help='Column name for the second TF site')
     parser.add_argument('-s', '--smode', action="store", dest="smode", type=str,  help='Site mode: positional/relative')
     parser.add_argument('-r', '--rel_ori',  action="store_true", dest="rel_ori", help='Use relative orientations')
-    parser.add_argument('-o', '--one_hot_ori',  action="store_true", dest="one_hot_ori", help='Represent orientation feature in one hot encoding')
+    parser.add_argument('-oh', '--one_hot_ori',  action="store_true", dest="one_hot_ori", help='Represent orientation feature in one hot encoding')
+    parser.add_argument('-o', '--outdir', action="store", dest="outdir", default=".", help='output directory to store output files')
     args = parser.parse_args()
+
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
 
     # basepath = "output/Ets1Runx1"
     # trainingpath = "%s/training/train_ets1_runx1.tsv" % basepath
@@ -101,7 +105,7 @@ if __name__ == "__main__":
             ).run_all(),
     }
 
-    pl.plot_model_metrics(best_models, path="auc_posfeatures.pdf", cvfold=10, score_type="auc", varyline=True, title="AUC Shape features", interp=True)
+    pl.plot_model_metrics(best_models, path=os.path.join(args.outdir, "auc_posfeatures.pdf"), cvfold=10, score_type="auc", varyline=True, title="AUC Shape features", interp=True)
 
     feature_dict = {
         "distance":{"type":"numerical"},
@@ -115,6 +119,6 @@ if __name__ == "__main__":
     label = ct.get_numeric_label({'cooperative': 1, 'independent': 0})
     rf = best_models["distance,orientation,sequence,shape"][1]
     rf.fit(train,label)
-    model_name = "rfposmodel.sav"
+    model_name = os.path.join(args.outdir, "rfposmodel.sav")
     pickle.dump(rf, open(model_name, 'wb'))
     print("Model saved in %s" % model_name)
