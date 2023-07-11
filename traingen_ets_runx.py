@@ -26,12 +26,14 @@ if __name__ == "__main__":
 
     # ========= INPUT FIELDS =========
 
+    # ============ ETS1-RUNX1 ============
     # outdir = "data/analysis_files/ETS1_RUNX1/training"
     # lbled_path = "data/analysis_files/ETS1_RUNX1/labeled/ets1_runx1_seqlbled.tsv"
     # maintf = "ets1"
     # cooptf = "runx1"
     # color = ["#b22222","#FFA07A"]
 
+    # ============ RUNX1-ETS1 ============
     outdir = "data/analysis_files/RUNX1_ETS1/training"
     lbled_path = "data/analysis_files/RUNX1_ETS1/labeled/runx1_ets1_seqlbled.tsv"
     maintf = "runx1"

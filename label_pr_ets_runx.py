@@ -97,19 +97,16 @@ def plot_pval(df, path):
 
 if __name__ == "__main__":
     # ============ INPUT PARAMETERS ============
-    outdir = "data/analysis_files/ETS1_ETS1/labeled"
     neg_percentile = 0.75
     p_default = 0.015
     p_ambiguous = 0.06
     kompas_ets = Kompas("data/sitemodels/Ets1_kmer_alignment.txt", core_start = 11, core_end = 15, core_center = 12)
     kompas_runx = Kompas("data/sitemodels/Runx1_kmer_alignment.txt", core_start = 12, core_end = 17, core_center = 14)
 
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
     # Note: m for main TF, mc for main and cooperator TF
 
     # ============ ETS1-RUNX1 ============
+    # outdir = "data/analysis_files/ETS1_RUNX1/labeled"
     # ch_x =  "Ets1"
     # ch_y = "Ets1 + Runx1"
     # both_title = "Cooperative vs independent binding of Ets1-Runx1"
@@ -120,6 +117,7 @@ if __name__ == "__main__":
     # colors = ["#b22222","#FFA07A"]
 
     # ============ RUNX1-ETS1 ============
+    outdir = "data/analysis_files/RUNX1_ETS1/labeled"
     ch_x =  "Runx1"
     ch_y = "Runx1 + Ets1"
     both_title = "Cooperative vs independent binding of Runx1-Ets1"
@@ -128,6 +126,9 @@ if __name__ == "__main__":
     df_m, neg_m = pd.read_csv("data/probe_files/clean/RUNX1_only_pr_clean.csv"), pd.read_csv("data/probe_files/clean/RUNX1_only_neg_clean.csv")
     df_mc, neg_mc = pd.read_csv("data/probe_files/clean/RUNX1_ETS1_pr_clean.csv"), pd.read_csv("data/probe_files/clean/RUNX1_ETS1_neg_clean.csv")
     colors = ["#0343df","#75bbfd"]
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     oricoop = "er" if cooptf == "ets1" else "re"
 
