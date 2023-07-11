@@ -3,6 +3,8 @@ The pipeline for analyzing cooperative genomic context protein binding microarra
 
 All input and processed files, including figures, are available in: https://duke.box.com/s/cnbo6gjg223mtdun3cnemycwep414wgd
 
+The inputs required for the pipeline are in data/probe_files/raw and data/sitemodels
+
 ## Install requirements
 
 Python version >= 3.6.0
