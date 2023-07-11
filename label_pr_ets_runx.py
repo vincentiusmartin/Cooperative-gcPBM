@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 import coopgcpbm.util.stats as st
 from coopgcpbm.sitespredict.kompas import Kompas
@@ -96,11 +97,15 @@ def plot_pval(df, path):
 
 if __name__ == "__main__":
     # ============ INPUT PARAMETERS ============
+    outdir = "data/analysis_files/ETS1_ETS1/labeled"
     neg_percentile = 0.75
     p_default = 0.015
     p_ambiguous = 0.06
     kompas_ets = Kompas("data/sitemodels/Ets1_kmer_alignment.txt", core_start = 11, core_end = 15, core_center = 12)
     kompas_runx = Kompas("data/sitemodels/Runx1_kmer_alignment.txt", core_start = 12, core_end = 17, core_center = 14)
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     # Note: m for main TF, mc for main and cooperator TF
 
@@ -147,10 +152,10 @@ if __name__ == "__main__":
     df_mc["intensity"] = (df_mc["intensity"] - intercept)/slope
 
     # Need to save this to avoid computing time in the subsequent process
-    df_m.to_csv("%s_%s_main.csv" % (maintf, cooptf),index=False)
-    df_mc.to_csv("%s_%s_main_cooperator.csv" % (maintf, cooptf),index=False)
-    df_m = pd.read_csv("%s_%s_main.csv" % ( maintf, cooptf))
-    df_mc = pd.read_csv("%s_%s_main_cooperator.csv" % ( maintf, cooptf))
+    df_m.to_csv(os.path.join(outdir, "%s_%s_main.csv" % (maintf, cooptf)),index=False)
+    df_mc.to_csv(os.path.join(outdir, "%s_%s_main_cooperator.csv" % (maintf, cooptf)),index=False)
+    df_m = pd.read_csv(os.path.join(outdir, "%s_%s_main.csv" % ( maintf, cooptf)))
+    df_mc = pd.read_csv(os.path.join(outdir, "%s_%s_main_cooperator.csv" % ( maintf, cooptf)))
 
     olist = []
     for ori in ["er","re"]:
@@ -212,10 +217,10 @@ if __name__ == "__main__":
     print("Number of distinct names, above cutoff, after orientation joining %d" % both_ori[both_ori["label"] != "below_cutoff"]["Name"].nunique())
 
     both_ori_plt = both_ori[["Name","intensity_x","intensity_y","unnormalized_intensity","label"]]
-    both_ori_plt[both_ori_plt["label"] != "below_cutoff"].sort_values("Name").to_csv("both_ori_plt_%s_%s.csv" % (maintf,cooptf),index=False)
+    both_ori_plt[both_ori_plt["label"] != "below_cutoff"].sort_values("Name").to_csv(os.path.join(outdir, "both_ori_plt_%s_%s.csv" % (maintf,cooptf)),index=False)
 
-    both_ori_plt = pd.read_csv("both_ori_plt_%s_%s.csv" % (maintf,cooptf))
-    arr.plot_classified_labels(both_ori_plt, path="normalized_%s_%s.pdf" % (maintf,cooptf), col1="intensity_x", col2="intensity_y",
+    both_ori_plt = pd.read_csv(os.path.join(outdir, "both_ori_plt_%s_%s.csv" % (maintf,cooptf)))
+    arr.plot_classified_labels(both_ori_plt, path=os.path.join(outdir, "normalized_%s_%s.pdf" % (maintf,cooptf)), col1="intensity_x", col2="intensity_y",
             title=both_title, xlab=ch_x, ylab=ch_y, plotnonsignif=False, labelnames=["cooperative","independent","anticoop"], colors=colors, showlog=True)
 
     # we use sequence where ets1 is on the left for simplicity
@@ -224,7 +229,7 @@ if __name__ == "__main__":
     seq_er_intensity = both_ori_plt[both_ori_plt["label"] != "below_cutoff"].merge(nmsqmap, on="Name")[["Sequence","intensity_x","intensity_y","unnormalized_intensity","label"]] \
              .rename(columns={'intensity_x':ch_x, "unnormalized_intensity": "%s_unnormalized"%ch_y, "intensity_y":"%s_normalized"%ch_y}) \
              .drop_duplicates("Sequence")
-    seq_er_intensity.to_csv("seq_%s_%s_intensity.csv" % (maintf,cooptf),index=False)
+    seq_er_intensity.to_csv(os.path.join(outdir, "seq_%s_%s_intensity.csv" % (maintf,cooptf)),index=False)
 
     print("Count per label",seq_er_intensity[["label","Sequence"]].groupby("label").count())
 
@@ -232,4 +237,4 @@ if __name__ == "__main__":
     all_labeled = name_info.merge(both_ori_plt[["Name","label"]], on="Name")
     all_labeled = all_labeled[all_labeled["label"] != "below_cutoff"].drop_duplicates("Sequence")
     all_labeled["distance"] = abs(all_labeled["%s_pos" % maintf] - all_labeled["%s_pos" % cooptf])
-    all_labeled.to_csv("%s_%s_seqlbled.tsv" % (maintf,cooptf), sep="\t", index=False, columns=["Name", "Sequence", "%s_pos" % maintf, "%s_start" % maintf, "%s_pos" % cooptf, "%s_start" % cooptf, "distance", "ori", "label"])
+    all_labeled.to_csv(os.path.join(outdir, "%s_%s_seqlbled.tsv" % (maintf,cooptf)), sep="\t", index=False, columns=["Name", "Sequence", "%s_pos" % maintf, "%s_start" % maintf, "%s_pos" % cooptf, "%s_start" % cooptf, "distance", "ori", "label"])

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import os
 
 import coopgcpbm.util.stats as st
 import coopgcpbm.arranalysis as arr
@@ -55,7 +56,11 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--pcut', action="store", dest="pcut", type=float, default=0.0003,  help='P-value cutoff for sequences labeled as cooperative')
     parser.add_argument('-q', '--pambig', action="store", dest="pambig", type=float, default=0.105,  help='P-value cutoff for sequences labeled as cooperative')
     parser.add_argument('-f', '--fdrcorr',  action="store_true", dest="fdrcorr", help='Perform fdr correction')
+    parser.add_argument('-o', '--outdir', action="store", dest="outdir", default=".", help='output directory to store output files')
     args = parser.parse_args()
+
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
 
     # read input clean probe and negative control files
     df, negdf = pd.read_csv(args.path), pd.read_csv(args.negpath)
@@ -88,8 +93,8 @@ if __name__ == "__main__":
     indiv,two = arr.make_replicas_permutation(df, affcol="intensity")
     # indiv, two = pickle.load( open( "indiv.p", "rb" ) ), pickle.load( open( "two.p", "rb" ) )
 
-    arr.permutdict2df(indiv).drop_duplicates().sort_values(["Name","ori"]).to_csv("ets1_ets1_indiv.csv", index=False)
-    arr.permutdict2df(two).drop_duplicates().sort_values(["Name","ori"]).to_csv("ets1_ets1_two.csv", index=False)
+    arr.permutdict2df(indiv).drop_duplicates().sort_values(["Name","ori"]).to_csv(os.path.join(args.outdir, "ets1_ets1_indiv.csv"), index=False)
+    arr.permutdict2df(two).drop_duplicates().sort_values(["Name","ori"]).to_csv(os.path.join(args.outdir, "ets1_ets1_two.csv"), index=False)
 
     labeled_dict = {}
     median_dict = df.groupby(["Name", "ori", "type"])["intensity"].median().to_dict()
@@ -113,12 +118,12 @@ if __name__ == "__main__":
 
     seqdf = df[(df["type"] == "wt") & (df["ori"] == "o1")][["Name","Sequence"]]
     seqlbled = lbled_both.merge(seqdf, on="Name")[["Name","Sequence","label","p_o1","label_o1","p_o2","label_o2"]].drop_duplicates()
-    seqlbled.to_csv("ets_ets_seqlabeled.csv", index=False)
+    seqlbled.to_csv(os.path.join(args.outdir, "ets_ets_seqlabeled.csv"), index=False)
     print("Label count", seqlbled["label"].value_counts())
 
     # plot both result in one orientation only; only take independent and cooperative since we have little to no anticooperative
     filt = lbled_both[(lbled_both['label'] != "fail_cutoff") & (lbled_both['label'] != "anticooperative")]
     lbled_one_ori = labeled_dict['o1'].merge(filt[["Name"]],on="Name")
     arr.plot_classified_labels(lbled_one_ori[lbled_one_ori["label"] != "anticooperative"], col1="indiv_median", col2="two_median", plotnonsignif=False,
-                       xlab="M1-M3+M2-M3", ylab="WT-M3", path="labeled_ets_ets_scatter.pdf", title="Cooperative vs independent binding of Ets1-Ets1",
+                       xlab="M1-M3+M2-M3", ylab="WT-M3", path=os.path.join(args.outdir, "labeled_ets_ets_scatter.pdf"), title="Cooperative vs independent binding of Ets1-Ets1",
                        labelnames=["cooperative","independent","anticooperative"], showlog=True)

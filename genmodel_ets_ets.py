@@ -12,7 +12,11 @@ import coopgcpbm.modeler.plotlib as pl
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Generate ETS1-ETS1 random forest models')
     parser.add_argument(action="store", dest="path", type=str, help='Training file')
+    parser.add_argument('-o', '--outdir', action="store", dest="outdir", default=".", help='output directory to store output files')
     args = parser.parse_args()
+
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
 
     df = pd.read_csv(args.path,sep="\t")
     ct = CoopTrain(df)
@@ -73,7 +77,7 @@ if __name__ == "__main__":
             ).run_all()
     }
 
-    pl.plot_model_metrics(best_models, path="auc_all.png", cvfold=10, score_type="auc", varyline=True, title="Average ROC Curves for ETS1-ETS1", interp=True)
+    pl.plot_model_metrics(best_models, path=os.path.join(args.outdir, "auc_all.png"), cvfold=10, score_type="auc", varyline=True, title="Average ROC Curves for ETS1-ETS1", interp=True)
 
     rf = best_models["strength,distance,orientation"][1]
 
@@ -85,6 +89,6 @@ if __name__ == "__main__":
     label = ct.get_numeric_label({'cooperative': 1, 'independent': 0})
 
     rf.fit(train,label)
-    model_name = "ets1_ets1_rfmodel.sav"
+    model_name = os.path.join(args.outdir, "ets1_ets1_rfmodel.sav")
     pickle.dump(rf, open(model_name, 'wb'))
     print("Model saved in %s" % model_name)

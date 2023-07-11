@@ -1,5 +1,6 @@
 import pandas as pd
 import argparse
+import os
 
 from coopgcpbm.modeler.cooptrain import CoopTrain
 import coopgcpbm.traingen as tg
@@ -72,7 +73,11 @@ if __name__ == "__main__":
     parser.add_argument(action="store", dest="path", type=str, help='Labeled files input path')
     parser.add_argument('-p', '--pwmpath', action="store", dest="pwmpath", type=str,  help='PWM path')
     parser.add_argument('-k', '--kmeralign', action="store", dest="kmeralign", type=str,  help='K-mer Ets1_kmer_alignment path')
+    parser.add_argument('-o', '--outdir', action="store", dest="outdir", default=".", help='output directory to store output files')
     args = parser.parse_args()
+
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
 
     pwm_ets = PWM(args.pwmpath, log=True)
     kompas_ets = Kompas(args.kmeralign,
@@ -83,9 +88,9 @@ if __name__ == "__main__":
     train = gen_training(df, pwm_ets, kompas_ets).drop_duplicates(["Sequence"])
 
     print(train["label"].value_counts())
-    train.to_csv("train_ets1_ets1.tsv", index=False, sep="\t")
+    train.to_csv(os.path.join(args.outdir, "train_ets1_ets1.tsv"), index=False, sep="\t")
 
     train.rename(columns={'site_str_score': 'Binding strength of the stronger site', 'site_wk_score': 'Binding strength of the weaker site'}, inplace=True)
-    pl.plot_stacked_categories(train, "distance", path="distance_bar.png", title="Distance distribution", ratio=True, figsize=(17,4), color = ["#b22222","#FFA07A"])
-    pl.plot_stacked_categories(train, "orientation", path="ori_bar.png", title="Relative sites orientation\ndistribution", ratio=True, figsize=(9,5), color = ["#b22222","#FFA07A"])
-    pl.plot_box_categories(train, path="boxplot.png", incols=["Binding strength of the stronger site", "Binding strength of the weaker site"], alternative="smaller", color = ["#b22222","#FFA07A"])
+    pl.plot_stacked_categories(train, "distance", path=os.path.join(args.outdir, "distance_bar.png"), title="Distance distribution", ratio=True, figsize=(17,4), color = ["#b22222","#FFA07A"])
+    pl.plot_stacked_categories(train, "orientation", path=os.path.join(args.outdir, "ori_bar.png"), title="Relative sites orientation\ndistribution", ratio=True, figsize=(9,5), color = ["#b22222","#FFA07A"])
+    pl.plot_box_categories(train, path=os.path.join(args.outdir, "boxplot.png"), incols=["Binding strength of the stronger site", "Binding strength of the weaker site"], alternative="smaller", color = ["#b22222","#FFA07A"])

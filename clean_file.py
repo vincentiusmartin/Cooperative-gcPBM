@@ -2,6 +2,7 @@ import argparse
 import pandas as pd
 from pathlib import Path
 from difflib import SequenceMatcher
+import os
 
 import coopgcpbm.arranalysis as arr
 import coopgcpbm.util.bio as bio
@@ -40,7 +41,7 @@ def fixdup_single_name(nm, df):
     return named
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description = 'Generate clean probe file with informations needed for the pipeline')
+    parser = argparse.ArgumentParser(description = 'Generate clean probe file with information needed for the pipeline')
     parser.add_argument(action="store", dest="path", type=str, help='File input path')
     parser.add_argument('-k', '--key', action="store", dest="key", type=str,  help='include key string')
     parser.add_argument('-l', '--keycol', action="store", dest="keycol", type=str, default="Name",  help='column for the main probes key')
@@ -51,7 +52,11 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--fixnaming', action="store_true", dest="fixnaming", help='fix naming error in the orientatiion files')
     parser.add_argument('-g', '--fixdup', action="store_true", dest="fixdup", help='fix naming duplicates')
     parser.add_argument('-i', '--probeid', action="store_true", dest="prbid", help='include probe id in the output')
+    parser.add_argument('-o', '--outdir', action="store", dest="outdir", default=".", help='output directory to store output files')
     args = parser.parse_args()
+
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
 
     pd.set_option("display.max_columns",None)
     filename = Path(args.path).stem
@@ -75,5 +80,5 @@ if __name__ == "__main__":
             dflist.extend(gdf.to_dict('records'))
         df = pd.DataFrame(dflist)
 
-    df.to_csv("%s_pr_clean.csv" % filename, index=False)
-    neg.to_csv("%s_neg_clean.csv" % filename, index=False)
+    df.to_csv(os.path.join(args.outdir, "%s_pr_clean.csv" % filename), index=False)
+    neg.to_csv(os.path.join(args.outdir, "%s_neg_clean.csv" % filename), index=False)

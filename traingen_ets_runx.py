@@ -26,15 +26,20 @@ if __name__ == "__main__":
 
     # ========= INPUT FIELDS =========
 
+    # outdir = "data/analysis_files/ETS1_RUNX1/training"
     # lbled_path = "data/analysis_files/ETS1_RUNX1/labeled/ets1_runx1_seqlbled.tsv"
     # maintf = "ets1"
     # cooptf = "runx1"
     # color = ["#b22222","#FFA07A"]
 
+    outdir = "data/analysis_files/RUNX1_ETS1/training"
     lbled_path = "data/analysis_files/RUNX1_ETS1/labeled/runx1_ets1_seqlbled.tsv"
     maintf = "runx1"
     cooptf = "ets1"
     color = ["#0343df","#75bbfd"]
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     if maintf == "ets1":
         pwm_main = PWM("data/sitemodels/%s.txt" % maintf, log=True, reverse=False)
@@ -60,9 +65,9 @@ if __name__ == "__main__":
     train = train[(train["ets1_score"] != - 999) & (train["runx1_score"] != - 999)]
 
     # print(train.groupby(["distance","orientation"])["label"].value_counts())
-    train.to_csv("train_%s_%s.tsv" % (maintf,cooptf),sep="\t", index=False, float_format='%.3f')
+    train.to_csv(os.path.join(outdir, "train_%s_%s.tsv" % (maintf,cooptf)),sep="\t", index=False, float_format='%.3f')
 
     train.rename(columns={'%s_score' % maintf: '%s strength\n(main TF)' % maintf.capitalize(), '%s_score' % cooptf: '%s strength\n(cooperator TF)' % cooptf.capitalize()}, inplace=True)
-    plot.plot_stacked_categories(train, "distance", path="distance_bar.png", title="Distance distribution", ratio=True, figsize=(17,4), color=color)
-    plot.plot_stacked_categories(train, "orientation", path="ori_bar.png", title="Relative sites orientation\ndistribution", ratio=True, figsize=(9,5), color=color)
-    plot.plot_box_categories(train, path="boxplot.png", incols=["%s strength\n(main TF)" % maintf.capitalize(), "%s strength\n(cooperator TF)" % cooptf.capitalize()], alternative="smaller", color=color)
+    plot.plot_stacked_categories(train, "distance", path=os.path.join(outdir, "distance_bar.png"), title="Distance distribution", ratio=True, figsize=(17,4), color=color)
+    plot.plot_stacked_categories(train, "orientation", path=os.path.join(outdir, "ori_bar.png"), title="Relative sites orientation\ndistribution", ratio=True, figsize=(9,5), color=color)
+    plot.plot_box_categories(train, path=os.path.join(outdir, "boxplot.png"), incols=["%s strength\n(main TF)" % maintf.capitalize(), "%s strength\n(cooperator TF)" % cooptf.capitalize()], alternative="smaller", color=color)
