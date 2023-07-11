@@ -133,7 +133,7 @@ Output files:
 
 Example outputs, see: `data/analysis_files/ETS1-RUNX1/model`
 
-## Shape analysis for ETS1-ETS1 or ETS1-RUNX1
+## Shape analysis for ETS1-ETS1, ETS1-RUNX1, or RUNX1-ETS1
 
 ### 1. Generate Random Forest model using sequence and shape features ###
 
@@ -142,26 +142,27 @@ The code requires DNAShape R package and imported using `rpy2`. Please install t
 Code: `gen_posmdl.py`
 
 Run:
-- ETS1-ETS1: `python3 gen_posmdl.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv -a site_str -b site_wk -s relative -r -o`
-- ETS1-RUNX1: `python3 gen_posmdl.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv -a ets1 -b runx1 -s positional`
-- RUNX1-ETS1:`python3 gen_posmdl.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv -a runx1 -b ets1 -s positional`
+- ETS1-ETS1: `python3 gen_posmdl.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv -a site_str -b site_wk -s relative -r -oh -o "data/analysis_files/ETS1_ETS1/model"`
+- ETS1-RUNX1: `python3 gen_posmdl.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv -a ets1 -b runx1 -s positional -o "data/analysis_files/ETS1_RUNX1/model"`
+- RUNX1-ETS1:`python3 gen_posmdl.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv -a runx1 -b ets1 -s positional -o "data/analysis_files/RUNX1_ETS1/model"`
 
 Output files:
 1. `rfposmodel.sav`: A pickle file with the random forest model trained on ETS1-ETS1 data using distance, orientation, shape, and sequence features
 2. `auc_posfeatures.pdf`: A figure with the ROC curve showing the model performances
 3. `auc_all.log`: A text file with the mean accuracy, mean AUC, and confusion matrices for all the models tested.
 
-### 2. Shape analysis for ETS1-ETS1 ###
+### 2. Shape analysis for ETS1-ETS1, ETS1-RUNX1, or RUNX1-ETS1###
 
 Create summary motif and shape figures for all sequences in the training data, also outputs the list of sequences for each configuration.
 
 Code: `shape_analysis.py`
 
 Run:
-- ETS1-ETS1: `python3 shape_analysis.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv -p site_str_pos,site_wk_pos`
-- ETS1-RUNX1: `python3 shape_analysis.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv -p ets1_pos,runx1_pos`
-- RUNX1-ETS1: `python3 shape_analysis.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv -p runx1_pos,ets1_pos`
+- ETS1-ETS1: `python3 shape_analysis.py data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv -p site_str_pos,site_wk_pos -o "data/analysis_files/ETS1_ETS1/shape_out"`
+- ETS1-RUNX1: `python3 shape_analysis.py data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv -p ets1_pos,runx1_pos -o "data/analysis_files/ETS1_RUNX1/shape_out"`
+- RUNX1-ETS1: `python3 shape_analysis.py data/analysis_files/RUNX1_ETS1/training/train_runx1_ets1.tsv -p runx1_pos,ets1_pos -o "data/analysis_files/RUNX1_ETS1/shape_out"`
 
 Example outputs, see:
 - ETS1-ETS1: `data/analysis_files/ETS1_ETS1/shape_out`
 - ETS1-RUNX1: `data/analysis_files/ETS1_RUNX1/shape_out`
+- RUNX1-ETS1: `data/analysis_files/RUNX1_ETS1/shape_out`

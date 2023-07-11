@@ -49,7 +49,7 @@ if __name__ == "__main__":
     labels = ["independent", "cooperative"]
 
     labels = df["label"].unique()
-    with PdfPages("%s/motifs.pdf" % args.outdir) as pdf:
+    with PdfPages(os.path.join(args.outdir, "motifs.pdf")) as pdf:
         for d in dist:
             curdf_dist = df[df['distance'] == d]
             fig = plt.figure(figsize=(12,12))
@@ -77,7 +77,7 @@ if __name__ == "__main__":
             pdf.savefig(fig)
             plt.close()
 
-    with PdfPages("%s/shape_plots.pdf" % args.outdir) as pdf:
+    with PdfPages(os.path.join(args.outdir, "shape_plots.pdf")) as pdf:
         for d in dist:
             curdf_dist = pd.DataFrame(df[df['distance'] == d])
             for ori in oris: # oris
@@ -94,5 +94,5 @@ if __name__ == "__main__":
                 oristr = ori.replace("/","")
                 for l in labels:
                     curdflbl = curdf[curdf["label"] == l]
-                    with open("%s/seqs_dist%d_%s_%s.txt"%(args.outdir,d,oristr,l),'w') as f:
+                    with open(os.path.join(args.outdir, "seqs_dist%d_%s_%s.txt"%(d,oristr,l)),'w') as f:
                         f.write("\n".join(curdflbl["seqalign"].tolist()))
