@@ -73,7 +73,7 @@ Description: Generate training data with all the features and labels for the seq
 
 Code: `traingen_ets_ets.py`
 
-Run: `python3 traingen_ets_ets.py data/analysis_files/ETS1_ETS1/labeled/ets_ets_seqlabeled.csv -p data/sitemodels/ETS1.txt -k data/sitemodels/ETS1_kmer_alignment.txt -o "data/analysis_files/ETS1_ETS1/training"` 
+Run: `python3 traingen_ets_ets.py data/analysis_files/ETS1_ETS1/labeled/ets_ets_seqlabeled.csv -p data/sitemodels/ETS1.txt -k data/sitemodels/ETS1_kmer_alignment.txt -o "data/analysis_files/ETS1_ETS1/training"`
 
 Output files:
 1. `train_ets1_ets1.tsv`: Training data for ETS1-ETS1
@@ -161,7 +161,7 @@ Output files:
 2. `auc_posfeatures.pdf`: A figure with the ROC curve showing the model performances
 3. `auc_all.log`: A text file with the mean accuracy, mean AUC, and confusion matrices for all the models tested.
 
-### 2. Shape analysis for ETS1-ETS1, ETS1-RUNX1, or RUNX1-ETS1###
+### 2. Shape analysis for ETS1-ETS1, ETS1-RUNX1, or RUNX1-ETS1
 
 Create summary motif and shape figures for all sequences in the training data, also outputs the list of sequences for each configuration.
 
