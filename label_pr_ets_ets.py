@@ -124,6 +124,7 @@ if __name__ == "__main__":
     # plot both result in one orientation only; only take independent and cooperative since we have little to no anticooperative
     filt = lbled_both[(lbled_both['label'] != "fail_cutoff") & (lbled_both['label'] != "anticooperative")]
     lbled_one_ori = labeled_dict['o1'].merge(filt[["Name"]],on="Name")
+    # lbled_one_ori.to_csv(os.path.join(args.outdir, "lbled_o1_selected.csv"), index=False)  # uncomment to generate data for regression
     arr.plot_classified_labels(lbled_one_ori[lbled_one_ori["label"] != "anticooperative"], col1="indiv_median", col2="two_median", plotnonsignif=False,
                        xlab="M1-M3+M2-M3", ylab="WT-M3", path=os.path.join(args.outdir, "labeled_ets_ets_scatter.pdf"), title="Cooperative vs independent binding of Ets1-Ets1",
                        labelnames=["cooperative","independent","anticooperative"], showlog=True)

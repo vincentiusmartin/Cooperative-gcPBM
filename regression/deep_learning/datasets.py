@@ -16,10 +16,13 @@ def get_dataframe(config_file, experiment_name):
     experiment = exp_dict[experiment_name]
 
     # potentially consolidate these pairs of data files.
-    df_delta = pd.read_csv(os.path.join(exp_dict["path"], experiment["deltas_file"]))
-    dft = pd.read_csv(os.path.join(exp_dict["path"], experiment["input_data_file"]), sep="\t")
+    df_delta = pd.read_csv(experiment["labeled_data_path"])
+    dft = pd.read_csv(experiment["training_data_path"], sep="\t")
 
-    df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
+    if experiment_name == "ets1_ets1":
+        df_delta["delta"] = df_delta["two_median"] - df_delta["indiv_median"]
+    else:
+        df_delta["delta"] = df_delta["intensity_y"] - df_delta["intensity_x"]
 
     return dft.merge(df_delta, on="Name")
 

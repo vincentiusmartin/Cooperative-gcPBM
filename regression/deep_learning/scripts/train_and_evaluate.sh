@@ -1,8 +1,7 @@
 #!/bin/bash
 #
 # TO RUN:
-# sbatch -p compsci-gpu --gres=gpu:1 train_and_evaluate.sh <gridsearch config file> \
-# <data config file>
+# sbatch -p compsci-gpu --gres=gpu:1 train_and_evaluate.sh <gridsearch config file> <data config file>
 #
 # SLURM parameters:
 #SBATCH --mail-type=END

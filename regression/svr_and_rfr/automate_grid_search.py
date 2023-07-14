@@ -104,7 +104,11 @@ def process_experiment_feature_set_model(experiment_name, feature_set, model, fi
     dfdelta = pd.read_csv(experiment["labeled_data_path"])
     dft = pd.read_csv(experiment["training_data_path"], sep="\t")
 
-    dfdelta["delta"] = dfdelta["two_median"] - dfdelta["indiv_median"]
+    if experiment_name == "ets1_ets1":
+        dfdelta["delta"] = dfdelta["two_median"] - dfdelta["indiv_median"]
+    else:
+        dfdelta["delta"] = dfdelta["intensity_y"] - dfdelta["intensity_x"]
+
     dfdelta = dfdelta[["Name", "delta"]]
 
     dft = dft.merge(dfdelta, on="Name")
@@ -194,9 +198,6 @@ if __name__ == "__main__":
         data_paths = json.load(f)
 
     for m in ("ets1_ets1", "ets1_runx1"):
-        for n in ("labeled_data_path", "training_data_path"):
-            data_paths[m][n] = os.path.join(data_paths["path"], data_paths[m][n])
-
         experiment_dict[m].update(data_paths[m])
 
     print(f"experiment: {experiment}, model: {model}, feature_set: {feature_set}, job_id:{job_id}")

@@ -1,13 +1,12 @@
 {
-  "path": "/usr/xtmp/kpinheiro/data",
   "ets1_ets1":
   {
-    "deltas_file": "lbled_o1_selected.csv",
-    "input_data_file": "train_ets1_ets1.tsv"
+    "labeled_data_path": "../../data/analysis_files/ETS1_ETS1/labeled/lbled_o1_selected.csv",
+    "training_data_path": "../../data/analysis_files/ETS1_ETS1/training/train_ets1_ets1.tsv"
   },
   "ets1_runx1":
   {
-    "deltas_file": "both_ori_plt_ets1_runx1.csv",
-    "input_data_file": "train_ets1_runx1.tsv"
+    "labeled_data_path": "../../data/analysis_files/ETS1_RUNX1/labeled/both_ori_plt_ets1_runx1.csv",
+    "training_data_path": "../../data/analysis_files/ETS1_RUNX1/training/train_ets1_runx1.tsv"
   }
 }
