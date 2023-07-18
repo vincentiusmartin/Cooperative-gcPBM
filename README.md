@@ -1,7 +1,7 @@
 # Cooperative-gcPBM
 The pipeline for analyzing cooperative genomic context protein binding microarray (cooperative gcPBM) data.
 
-All input and processed files, including figures, are available in: https://duke.box.com/s/cnbo6gjg223mtdun3cnemycwep414wgd
+All input and processed files, including figures, are available in the 'data' folder
 
 The inputs required for the pipeline are in data/probe_files/raw and data/sitemodels
 
