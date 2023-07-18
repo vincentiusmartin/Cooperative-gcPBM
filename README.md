@@ -5,6 +5,8 @@ All input and processed files, including figures, are available in: https://duke
 
 The inputs required for the pipeline are in data/probe_files/raw and data/sitemodels
 
+![img.png](img.png)
+
 ## Install requirements
 
 Python version >= 3.6.0
