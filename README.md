@@ -5,7 +5,7 @@ All input and processed files, including figures, are available in: https://duke
 
 The inputs required for the pipeline are in data/probe_files/raw and data/sitemodels
 
-![img.png](img.png)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8160341.svg)](https://doi.org/10.5281/zenodo.8160341)
 
 ## Install requirements
 
