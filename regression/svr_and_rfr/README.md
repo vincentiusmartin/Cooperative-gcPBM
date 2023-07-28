@@ -15,7 +15,7 @@ simultaneously.
 
 Without SLURM:
 ```
-python automate_grid_search.py <job_id> <output_path> <data_config_path> <ets1_ets1|ets1_runx1>
+python3 automate_grid_search.py <job_id> <output_path> <data_config_path> <ets1_ets1|ets1_runx1>
 <random_forest_regression|support_vector_regression> <feature_1>,<feature_2>,...,<feature_n>
 ```
 

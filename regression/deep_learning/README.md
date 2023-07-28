@@ -17,14 +17,14 @@ uncomment line 127 of `label_pr_ets_ets.py` and re-run the associated script is 
 
 Without SLURM:
 ```
-python regression/deep_learning/scripts/experiment.py
-<job_id> <output_path> <data_config> <experiment_name> ... <test: TRUE|FALSE>
+python3 experiment.py <job_id> <output_path> <data_config> <experiment_name> ... <test: TRUE|FALSE>
+
 ```
 The required arguments are laid out below below:
 - `job_id`: arbitrary ID #, primarily for use in a SLURM job
 - `output_path`: path to put output of experiment
 - `data_config`: path to config file which specifies location of data
-- `experiment_name`: name of experiment
+- `experiment_name`: name of experiment (`ets1_ets1|ets1_runx1`)
 - `num_layers` (int): number of convolutional layers
 - `mers` (int): one-hot encode sequence as 1-mers, 2-mers, or 3-mers. Value is specified as `1`, `2`, or `3`.
 - `batch_size` (int): batch size used during training the neural network
@@ -39,3 +39,8 @@ will have kernel widths 3, 4, 5, and 6 respectively.)
 - `conv_filters` (int): number of convolutional filters at each layer (set for all layers)
 - `fc_node_count` (int): number of nodes at the first fully-connected layer
 - `test` (boolean): whether to use the test data splits (`TRUE`) or validation data splits (`FALSE`)
+
+e.g.
+```
+python3 experiment.py 123 ./ ./data-config.json ets1_ets1 2 1 128 4,4 FALSE FALSE 0.2 0.001 0.001 64 1024 FALSE
+```
