@@ -1,6 +1,9 @@
 # Convolutional Neural Network for cooperativity prediction
 
-Ensure that `coopgcpbm` package is installed. From the top-level directory of this project: `python setup.py develop`.
+Create a new virtual environment (as described in the top-level README) and run `pip install -r
+requirements.txt` to install dependencies necessary for this portion of the project. Additionally,
+ensure that `coopgcpbm` package is installed: from the top-level directory of this project run
+`python setup.py develop`.
 
 ### To Run
 With SLURM:
@@ -20,7 +23,7 @@ Without SLURM:
 python3 experiment.py <job_id> <output_path> <data_config> <experiment_name> ... <test: TRUE|FALSE>
 
 ```
-The required arguments are laid out below below:
+The required arguments are laid out below:
 - `job_id`: arbitrary ID #, primarily for use in a SLURM job
 - `output_path`: path to put output of experiment
 - `data_config`: path to config file which specifies location of data

@@ -1,5 +1,9 @@
 ## Random Forest Regression and Support Vector Regression
-Ensure that `coopgcpbm` package is installed. From the top-level directory of this project: `python setup.py develop`.
+
+Create a new virtual environment (as described in the top-level README) and run `pip install -r
+requirements.txt` to install dependencies necessary for this portion of the project. Additionally,
+ensure that `coopgcpbm` package is installed: from the top-level directory of this project run
+`python setup.py develop`.
 
 ### To Run
 With SLURM:
