@@ -4,6 +4,8 @@
 # sbatch -p compsci-gpu --gres=gpu:1 train_and_evaluate.sh <gridsearch config file> <data config file>
 #
 # SLURM parameters:
+# Ensure the upper bound for 'array' parameter corresponds to the number of combinations in the search-config being used
+#SBATCH --array=0-1024
 #SBATCH --mail-type=END
 
 gridsearch_config=$1

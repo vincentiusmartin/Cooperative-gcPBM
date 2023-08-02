@@ -26,10 +26,6 @@ matplotlib==3.5.1
 multidict==6.0.2
 munch==2.5.0
 numpy==1.22.2
-nvidia-cublas-cu11==11.10.3.66
-nvidia-cuda-nvrtc-cu11==11.7.99
-nvidia-cuda-runtime-cu11==11.7.99
-nvidia-cudnn-cu11==8.5.0.96
 omegaconf==2.2.3
 opencv-python==4.6.0.66
 packaging==21.3

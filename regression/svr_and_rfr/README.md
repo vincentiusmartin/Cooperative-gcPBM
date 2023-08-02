@@ -1,5 +1,9 @@
 ## Random Forest Regression and Support Vector Regression
-Ensure that `coopgcpbm` package is installed. From the top-level directory of this project: `python setup.py develop`.
+
+Create a new virtual environment (as described in the top-level README) and run `pip install -r
+requirements.txt` to install dependencies necessary for this portion of the project. Additionally,
+ensure that `coopgcpbm` package is installed: from the top-level directory of this project run
+`python setup.py develop`.
 
 ### To Run
 With SLURM:
@@ -15,7 +19,7 @@ simultaneously.
 
 Without SLURM:
 ```
-python automate_grid_search.py <job_id> <output_path> <data_config_path> <ets1_ets1|ets1_runx1>
+python3 automate_grid_search.py <job_id> <output_path> <data_config_path> <ets1_ets1|ets1_runx1>
 <random_forest_regression|support_vector_regression> <feature_1>,<feature_2>,...,<feature_n>
 ```
 
